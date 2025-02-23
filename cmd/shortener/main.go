@@ -57,9 +57,10 @@ func run() error {
 	defer func() {
 		err := httpServer.Shutdown()
 		if err != nil {
-			log.Panicf("shutdown error: %s", err)
+			log.Printf("shutdown error: %s", err)
 		}
 	}()
+
 	<-ctx.Done()
 
 	err := services.Wait()
