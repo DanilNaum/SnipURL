@@ -1,6 +1,7 @@
 package snipendpoint
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -26,7 +27,15 @@ func (l *snipEndpoint) post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(r.URL.Scheme + r.Host + "/" + id))
+	scheme := "http"  // По умолчанию используем HTTP
+	if r.TLS != nil { // Если запрос пришел по HTTPS, используем HTTPS
+		scheme = "https"
+	}
+	host := r.Host // Используем хост из запроса
 
+	// Формируем полный URL
+	fullURL := fmt.Sprintf("%s://%s/%s", scheme, host, id)
+
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte(fullURL))
 }
