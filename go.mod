@@ -1,6 +1,6 @@
 module github.com/DanilNaum/SnipURL
 
-go 1.23
+go 1.22.12
 
 require (
 	github.com/stretchr/testify v1.10.0
