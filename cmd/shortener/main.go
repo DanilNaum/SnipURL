@@ -61,8 +61,6 @@ func run() error {
 		}
 	}()
 
-	<-ctx.Done()
-
 	err := services.Wait()
 
 	if err == nil || errors.Is(err, context.Canceled) {
