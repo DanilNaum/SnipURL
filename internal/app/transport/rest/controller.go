@@ -8,8 +8,8 @@ import (
 )
 
 type service interface {
-	GetUrl(ctx context.Context, id string) (string, error)
-	SetUrl(ctx context.Context, url string) (string, error)
+	GetURL(ctx context.Context, id string) (string, error)
+	SetURL(ctx context.Context, url string) (string, error)
 }
 
 func NewController(mux *http.ServeMux, service service) http.Handler {

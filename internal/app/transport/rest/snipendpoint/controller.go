@@ -11,8 +11,8 @@ const (
 )
 
 type service interface {
-	SetUrl(ctx context.Context, url string) (string, error)
-	GetUrl(ctx context.Context, id string) (string, error)
+	SetURL(ctx context.Context, url string) (string, error)
+	GetURL(ctx context.Context, id string) (string, error)
 }
 type snipEndpoint struct {
 	service service

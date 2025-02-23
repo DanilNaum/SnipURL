@@ -11,13 +11,16 @@ func (l *snipEndpoint) post(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
 		return
 	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	url := string(body)
 
-	id, err := l.service.SetUrl(r.Context(), url)
+	id, err := l.service.SetURL(r.Context(), url)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

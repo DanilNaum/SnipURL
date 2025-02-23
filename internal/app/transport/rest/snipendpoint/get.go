@@ -13,7 +13,7 @@ func (l *snipEndpoint) get(w http.ResponseWriter, r *http.Request) {
 
 	id := r.PathValue("id")
 
-	url, err := l.service.GetUrl(r.Context(), id)
+	url, err := l.service.GetURL(r.Context(), id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

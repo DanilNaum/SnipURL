@@ -8,7 +8,7 @@ import (
 
 var (
 	ErrNotFound = errors.New("not found")
-	ErrIdIsBusy = errors.New("id is busy")
+	ErrIDIsBusy = errors.New("id is busy")
 )
 
 type storage struct {
@@ -23,21 +23,21 @@ func NewStorage() *storage {
 	}
 }
 
-func (s *storage) SetUrl(_ context.Context, id, url string) error {
+func (s *storage) SetURL(_ context.Context, id, url string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if oldUrl, ok := s.urls[id]; ok && oldUrl != url {
-		return ErrIdIsBusy
+	if oldURL, ok := s.urls[id]; ok && oldURL != url {
+		return ErrIDIsBusy
 	}
 
 	s.urls[id] = url
 	return nil
 }
 
-func (s *storage) GetUrl(_ context.Context, id string) (string, error) {
+func (s *storage) GetURL(_ context.Context, id string) (string, error) {
 	s.mu.RLock()
-	s.mu.RUnlock()
+	defer s.mu.RUnlock()
 
 	url, ok := s.urls[id]
 	if !ok {

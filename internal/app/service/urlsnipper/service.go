@@ -8,8 +8,8 @@ import (
 const _maxAttempts = 10
 
 type urlStorage interface {
-	SetUrl(ctx context.Context, id, url string) error
-	GetUrl(ctx context.Context, id string) (string, error)
+	SetURL(ctx context.Context, id, url string) error
+	GetURL(ctx context.Context, id string) (string, error)
 }
 type hasher interface {
 	Hash(s string) string
@@ -20,14 +20,14 @@ type urlSnipperService struct {
 	hasher  hasher
 }
 
-func NewUrlSnipperService(storage urlStorage, hasher hasher) *urlSnipperService {
+func NewURLSnipperService(storage urlStorage, hasher hasher) *urlSnipperService {
 	return &urlSnipperService{
 		storage: storage,
 		hasher:  hasher,
 	}
 }
 
-func (s *urlSnipperService) SetUrl(ctx context.Context, url string) (string, error) {
+func (s *urlSnipperService) SetURL(ctx context.Context, url string) (string, error) {
 
 	//	I am currently using a simple ID generation algorithm that ensures
 	//	that each ID is unique, but does not guarantee how many attempts it
@@ -47,7 +47,7 @@ func (s *urlSnipperService) SetUrl(ctx context.Context, url string) (string, err
 	urlCopy := url
 	for i := 0; i < _maxAttempts; i++ {
 		id := s.hasher.Hash(urlCopy)
-		err := s.storage.SetUrl(ctx, id, url)
+		err := s.storage.SetURL(ctx, id, url)
 		if err == nil {
 			return id, nil
 		}
@@ -59,6 +59,6 @@ func (s *urlSnipperService) SetUrl(ctx context.Context, url string) (string, err
 }
 
 // TODO: обернуть ошибку
-func (s *urlSnipperService) GetUrl(ctx context.Context, id string) (string, error) {
-	return s.storage.GetUrl(ctx, id)
+func (s *urlSnipperService) GetURL(ctx context.Context, id string) (string, error) {
+	return s.storage.GetURL(ctx, id)
 }

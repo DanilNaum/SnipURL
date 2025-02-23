@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -40,7 +41,7 @@ func run() error {
 
 	hash := hash.NewHasher(8)
 
-	urlSnipperService := urlsnipper.NewUrlSnipperService(storage, hash)
+	urlSnipperService := urlsnipper.NewURLSnipperService(storage, hash)
 
 	mux := http.NewServeMux()
 
@@ -49,16 +50,14 @@ func run() error {
 	httpServer := httpserver.NewHTTPServer(controller)
 
 	services.Go(func() error {
-		select {
-		case err := <-httpServer.Notify():
-			return err
-		}
+		err := <-httpServer.Notify()
+		return err
 	})
 
 	defer func() {
 		err := httpServer.Shutdown()
 		if err != nil {
-			// TODO: Log
+			log.Panicf("shutdown error: %s", err)
 		}
 	}()
 	<-ctx.Done()
