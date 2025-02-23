@@ -23,7 +23,7 @@ func (l *snipEndpoint) post(w http.ResponseWriter, r *http.Request) {
 
 	id, err := l.service.SetURL(r.Context(), url)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
