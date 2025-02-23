@@ -27,6 +27,6 @@ func (l *snipEndpoint) post(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(id))
+	w.Write([]byte(r.URL.Scheme + r.Host + "/" + id))
 
 }
