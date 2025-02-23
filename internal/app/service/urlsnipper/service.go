@@ -20,9 +20,10 @@ type urlSnipperService struct {
 	hasher  hasher
 }
 
-func NewUrlSnipperService(storage urlStorage) *urlSnipperService {
+func NewUrlSnipperService(storage urlStorage, hasher hasher) *urlSnipperService {
 	return &urlSnipperService{
 		storage: storage,
+		hasher:  hasher,
 	}
 }
 
@@ -55,4 +56,9 @@ func (s *urlSnipperService) SetUrl(ctx context.Context, url string) (string, err
 
 	}
 	return "", fmt.Errorf("failed to generate id")
+}
+
+// TODO: обернуть ошибку
+func (s *urlSnipperService) GetUrl(ctx context.Context, id string) (string, error) {
+	return s.storage.GetUrl(ctx, id)
 }

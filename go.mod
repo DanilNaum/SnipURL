@@ -2,7 +2,10 @@ module github.com/DanilNaum/SnipURL
 
 go 1.23
 
-require github.com/stretchr/testify v1.10.0
+require (
+	github.com/stretchr/testify v1.10.0
+	golang.org/x/sync v0.6.0
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
