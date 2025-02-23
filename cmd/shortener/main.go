@@ -35,7 +35,7 @@ func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
-	services, ctx := errgroup.WithContext(ctx)
+	services, _ := errgroup.WithContext(ctx)
 
 	storage := memory.NewStorage()
 
