@@ -8,13 +8,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"net/http"
-
 	"github.com/DanilNaum/SnipURL/internal/app/repository/url/memory"
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 	rest "github.com/DanilNaum/SnipURL/internal/app/transport/rest"
 	"github.com/DanilNaum/SnipURL/pkg/utils/hash"
 	"github.com/DanilNaum/SnipURL/pkg/utils/httpserver"
+	"github.com/go-chi/chi/v5"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -43,7 +42,7 @@ func run() error {
 
 	urlSnipperService := urlsnipper.NewURLSnipperService(storage, hash)
 
-	mux := http.NewServeMux()
+	mux := chi.NewRouter()
 
 	controller := rest.NewController(mux, urlSnipperService)
 
