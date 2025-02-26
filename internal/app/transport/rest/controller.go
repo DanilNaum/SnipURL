@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/DanilNaum/SnipURL/internal/app/transport/rest/snipendpoint"
+	"github.com/go-chi/chi/v5"
 )
 
 type service interface {
@@ -12,7 +13,7 @@ type service interface {
 	SetURL(ctx context.Context, url string) (string, error)
 }
 
-func NewController(mux *http.ServeMux, service service) http.Handler {
+func NewController(mux *chi.Mux, service service) http.Handler {
 	snipEndpoint := snipendpoint.NewSnipEndpoint(service)
 	snipEndpoint.Register(mux)
 

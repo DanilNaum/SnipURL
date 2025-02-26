@@ -2,7 +2,8 @@ package snipendpoint
 
 import (
 	"context"
-	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 const (
@@ -26,8 +27,7 @@ func NewSnipEndpoint(service service) *snipEndpoint {
 	}
 }
 
-func (l *snipEndpoint) Register(handler *http.ServeMux) {
-
-	handler.HandleFunc(endpointPost, l.post)
-	handler.HandleFunc(endpointGet, l.get)
+func (l *snipEndpoint) Register(r *chi.Mux) {
+	r.Post(endpointPost, l.post)
+	r.Get(endpointGet, l.get)
 }
