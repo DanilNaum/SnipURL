@@ -126,9 +126,15 @@ func TestSnipEndpoint_post(t *testing.T) {
 			mockService := &serviceMock{
 				SetURLFunc: tt.mocks.setURLFunc,
 			}
-
+			baseURL := "http://"
+			if tt.input.isHTTPS {
+				baseURL = "https://"
+			}
+			baseURL += tt.input.host
 			endpoint := &snipEndpoint{
 				service: mockService,
+				prefix:  "/",
+				baseURL: baseURL,
 			}
 			var bodyReader io.Reader
 			bodyReader = strings.NewReader(tt.input.body)
