@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/DanilNaum/SnipURL/internal/app/config"
 	"github.com/DanilNaum/SnipURL/internal/app/repository/url/memory"
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 	rest "github.com/DanilNaum/SnipURL/internal/app/transport/rest"
@@ -18,18 +19,22 @@ import (
 )
 
 func main() {
-	err := run()
+	logger := log.New(os.Stdout, "URL Snipper: ", log.LstdFlags)
+	logger.Println("App is running...")
+	err := run(logger)
 
 	if err != nil && !errors.Is(err, context.Canceled) {
-		// TODO: Log
+		logger.Printf("App fail with error %w", err)
 		os.Exit(1)
 	}
 
-	//TODO: Log
+	logger.Println("App is gracefully shutdown")
 	os.Exit(0)
 }
 
-func run() error {
+func run(log *log.Logger) error {
+
+	conf := config.GetConfig(log)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
@@ -44,9 +49,13 @@ func run() error {
 
 	mux := chi.NewRouter()
 
-	controller := rest.NewController(mux, urlSnipperService)
+	controller, err := rest.NewController(mux, conf.ServerConfig(), urlSnipperService)
 
-	httpServer := httpserver.NewHTTPServer(controller)
+	if err != nil {
+		return err
+	}
+
+	httpServer := httpserver.NewHTTPServer(controller, httpserver.WithAddr(conf.ServerConfig().HttpServerHost()))
 
 	services.Go(func() error {
 		err := <-httpServer.Notify()
@@ -61,7 +70,7 @@ func run() error {
 		}
 	}()
 
-	err := services.Wait()
+	err = services.Wait()
 
 	if err == nil || errors.Is(err, context.Canceled) {
 		return nil
