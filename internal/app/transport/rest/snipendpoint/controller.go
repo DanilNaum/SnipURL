@@ -25,7 +25,7 @@ type service interface {
 type snipEndpoint struct {
 	service service
 	prefix  string
-	baseUrl string
+	baseURL string
 }
 
 func NewSnipEndpoint(service service, conf config) (*snipEndpoint, error) {
@@ -36,7 +36,7 @@ func NewSnipEndpoint(service service, conf config) (*snipEndpoint, error) {
 	return &snipEndpoint{
 		service: service,
 		prefix:  prefix,
-		baseUrl: conf.BaseURL(),
+		baseURL: conf.BaseURL(),
 	}, nil
 }
 

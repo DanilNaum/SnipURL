@@ -28,7 +28,7 @@ func (l *snipEndpoint) post(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Формируем полный URL
-	fullURL := fmt.Sprintf("%s/%s", l.baseUrl, id)
+	fullURL := fmt.Sprintf("%s/%s", l.baseURL, id)
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(fullURL))
