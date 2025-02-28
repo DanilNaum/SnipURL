@@ -24,7 +24,7 @@ func main() {
 	err := run(logger)
 
 	if err != nil && !errors.Is(err, context.Canceled) {
-		logger.Printf("App fail with error %w", err)
+		logger.Printf("App fail with error %s", err)
 		os.Exit(1)
 	}
 
