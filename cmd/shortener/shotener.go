@@ -55,7 +55,7 @@ func run(log *log.Logger) error {
 		return err
 	}
 
-	httpServer := httpserver.NewHTTPServer(controller, httpserver.WithAddr(conf.ServerConfig().HttpServerHost()))
+	httpServer := httpserver.NewHTTPServer(controller, httpserver.WithAddr(conf.ServerConfig().HTTPServerHost()))
 
 	services.Go(func() error {
 		err := <-httpServer.Notify()
