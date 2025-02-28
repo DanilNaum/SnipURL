@@ -9,7 +9,7 @@ type logger interface {
 }
 
 type serverConfig interface {
-	HttpServerHost() string
+	HTTPServerHost() string
 	BaseURL() string
 	GetPrefix() (string, error)
 }

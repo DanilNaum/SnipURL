@@ -57,7 +57,7 @@ func (c *config) validate(log logger) {
 
 }
 
-func (c *config) HttpServerHost() string {
+func (c *config) HTTPServerHost() string {
 	return c.host
 }
 
