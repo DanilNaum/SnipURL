@@ -11,6 +11,11 @@ const (
 	endpointPost = "/"
 )
 
+type config interface {
+	GetPrefix() (string, error)
+	BaseURL() string
+}
+
 //go:generate moq -out service_moq_test.go . service
 type service interface {
 	SetURL(ctx context.Context, url string) (string, error)
@@ -19,15 +24,25 @@ type service interface {
 
 type snipEndpoint struct {
 	service service
+	prefix  string
+	baseUrl string
 }
 
-func NewSnipEndpoint(service service) *snipEndpoint {
+func NewSnipEndpoint(service service, conf config) (*snipEndpoint, error) {
+	prefix, err := conf.GetPrefix()
+	if err != nil {
+		return nil, err
+	}
 	return &snipEndpoint{
 		service: service,
-	}
+		prefix:  prefix,
+		baseUrl: conf.BaseURL(),
+	}, nil
 }
 
 func (l *snipEndpoint) Register(r *chi.Mux) {
-	r.Post(endpointPost, l.post)
-	r.Get(endpointGet, l.get)
+	r.Route(l.prefix, func(r chi.Router) {
+		r.Post(endpointPost, l.post)
+		r.Get(endpointGet, l.get)
+	})
 }

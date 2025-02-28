@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -21,7 +22,12 @@ func WithPort(port int) Option {
 
 func WithAddr(addr string) Option {
 	return func(s *server) {
-		s.server.Addr = addr
+		parts := strings.Split(addr, ":")
+		if len(parts) < 2 {
+			s.server.Addr = ":80" // Если порт не указан, возвращаем пустую строку
+			return
+		}
+		s.server.Addr = ":" + parts[len(parts)-1]
 	}
 
 }
