@@ -25,7 +25,7 @@ func TestServer_NewConfigFromFlags(t *testing.T) {
 		},
 		{
 			name: "custom_host_and_base_url",
-			args: []string{"-a", "example.com:8443", "-b", "https://example.com"},
+			args: []string{"-a", "example.com:8443", "-b", "https://example.com:8443"},
 			expected: &config{
 				host:    "example.com:8443",
 				baseURL: "https://example.com:8443",
