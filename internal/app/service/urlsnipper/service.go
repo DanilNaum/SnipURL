@@ -5,12 +5,20 @@ import (
 	"fmt"
 )
 
+var (
+	ErrFailedToGenerateID = fmt.Errorf("failed to generate id")
+	ErrFailedToGetUrl     = fmt.Errorf("failed to get url")
+)
+
 const _maxAttempts = 10
 
+//go:generate moq -out mock_url_storage_moq_test.go . urlStorage
 type urlStorage interface {
 	SetURL(ctx context.Context, id, url string) error
 	GetURL(ctx context.Context, id string) (string, error)
 }
+
+//go:generate moq -out mock_hasher_moq_test.go . hasher
 type hasher interface {
 	Hash(s string) string
 }
@@ -55,10 +63,13 @@ func (s *urlSnipperService) SetURL(ctx context.Context, url string) (string, err
 		urlCopy = fmt.Sprint(urlCopy, id)
 
 	}
-	return "", fmt.Errorf("failed to generate id")
+	return "", ErrFailedToGenerateID
 }
 
-// TODO: обернуть ошибку
 func (s *urlSnipperService) GetURL(ctx context.Context, id string) (string, error) {
-	return s.storage.GetURL(ctx, id)
+	url, err := s.storage.GetURL(ctx, id)
+	if err != nil {
+		return "", fmt.Errorf("%w: %w", ErrFailedToGetUrl, err)
+	}
+	return url, nil
 }
