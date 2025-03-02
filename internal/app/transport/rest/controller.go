@@ -10,7 +10,7 @@ import (
 
 type config interface {
 	GetPrefix() (string, error)
-	BaseURL() string
+	GetBaseURL() string
 }
 
 type service interface {

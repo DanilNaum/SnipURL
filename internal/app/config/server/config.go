@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"regexp"
+
+	"github.com/caarlos0/env/v6"
 )
 
 //go:generate moq -out logger_moq_test.go . logger
@@ -15,66 +17,105 @@ type logger interface {
 }
 
 type config struct {
-	host    string
-	baseURL string
+	Host    string `env:"SERVER_ADDRESS"`
+	BaseURL string `env:"BASE_URL"`
 }
 
-func NewConfigFromFlags(log logger) *config {
-	host := flag.String("a", "localhost:8080", "host:port")
+func NewConfig(log logger) *config {
 
-	baseURL := flag.String("b", "http://localhost:8080", "base url")
+	envConfig := configFromEnv(log)
+	flagsConfig := configFromFlags()
 
-	flag.Parse()
-
-	c := &config{
-		host:    *host,
-		baseURL: *baseURL,
-	}
+	c := mergeConfigs(envConfig, flagsConfig, log)
 
 	c.validate(log)
 
 	return c
 }
 
+func configFromFlags() *config {
+	host := flag.String("a", "localhost:8080", "host:port")
+
+	baseURL := flag.String("b", "http://localhost:8080", "base url")
+
+	flag.Parse()
+	return &config{
+		Host:    *host,
+		BaseURL: *baseURL,
+	}
+}
+
+func configFromEnv(log logger) *config {
+	c := &config{}
+	err := env.Parse(c)
+	if err != nil {
+		log.Fatalf("error parse config from Env: %s", err)
+	}
+	return c
+}
+
+func mergeConfigs(envConfig, flagsConfig *config, log logger) *config {
+	if envConfig == nil {
+		log.Fatalf("error env config is nil")
+	}
+
+	if flagsConfig == nil {
+		log.Fatalf("error flags config is nil")
+	}
+
+	if envConfig.Host == "" {
+		envConfig.Host = flagsConfig.Host
+	}
+
+	if envConfig.BaseURL == "" {
+		envConfig.BaseURL = flagsConfig.BaseURL
+	}
+
+	return envConfig
+}
+
 func (c *config) validate(log logger) {
 	hostPattern := `^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])(:[0-9]{1,5})?$`
 	re := regexp.MustCompile(hostPattern)
-	if !re.MatchString(c.host) {
-		log.Fatalf("invalid host: %s", c.host)
+	if !re.MatchString(c.Host) {
+		log.Fatalf("invalid host: %s", c.Host)
 		return
 	}
 
 	baseURLPattern := `^(http|https):\/\/(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])(:[0-9]{1,5})?(\/.*)?$`
 	re = regexp.MustCompile(baseURLPattern)
-	if !re.MatchString(c.baseURL) {
-		log.Fatalf("invalid base url: %s", c.baseURL)
+	if !re.MatchString(c.BaseURL) {
+		log.Fatalf("invalid base url: %s", c.BaseURL)
 		return
 	}
 
-	if !strings.Contains(c.baseURL, c.host) {
-		log.Fatalf("base url %s must contain host %s", c.baseURL, c.host)
+	if !strings.Contains(c.BaseURL, c.Host) {
+		log.Fatalf("base url %s must contain host %s", c.BaseURL, c.Host)
 	}
 
 }
 
 func (c *config) HTTPServerHost() string {
-	return c.host
+	return c.Host
 }
 
-func (c *config) BaseURL() string {
-	return c.baseURL
+func (c *config) GetBaseURL() string {
+	return c.BaseURL
 }
 
 func (c *config) GetPrefix() (string, error) {
-	parsedURL, err := url.Parse(c.baseURL)
+	parsedURL, err := url.Parse(c.BaseURL)
 	if err != nil {
 		return "", err
 	}
+
 	path := parsedURL.Path
+
 	path = strings.TrimSuffix(path, "/")
+
 	if path == "" {
 		return "/", nil
 	}
-	// Возвращаем путь
+
 	return path, nil
 }

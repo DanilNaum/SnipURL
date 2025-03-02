@@ -34,7 +34,7 @@ func main() {
 
 func run(log *log.Logger) error {
 
-	conf := config.GetConfig(log)
+	conf := config.NewConfig(log)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
