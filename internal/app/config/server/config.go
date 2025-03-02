@@ -57,10 +57,12 @@ func configFromEnv(log logger) *config {
 func mergeConfigs(envConfig, flagsConfig *config, log logger) *config {
 	if envConfig == nil {
 		log.Fatalf("error env config is nil")
+		return nil
 	}
 
 	if flagsConfig == nil {
 		log.Fatalf("error flags config is nil")
+		return nil
 	}
 
 	if envConfig.Host == "" {
