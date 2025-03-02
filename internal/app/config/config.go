@@ -10,7 +10,7 @@ type logger interface {
 
 type serverConfig interface {
 	HTTPServerHost() string
-	BaseURL() string
+	GetBaseURL() string
 	GetPrefix() (string, error)
 }
 
@@ -18,9 +18,9 @@ type Config struct {
 	serverConfig serverConfig
 }
 
-func GetConfig(log logger) *Config {
+func NewConfig(log logger) *Config {
 	return &Config{
-		serverConfig: server.NewConfigFromFlags(log),
+		serverConfig: server.NewConfig(log),
 	}
 }
 

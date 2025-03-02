@@ -13,7 +13,7 @@ const (
 
 type config interface {
 	GetPrefix() (string, error)
-	BaseURL() string
+	GetBaseURL() string
 }
 
 //go:generate moq -out service_moq_test.go . service
@@ -36,7 +36,7 @@ func NewSnipEndpoint(service service, conf config) (*snipEndpoint, error) {
 	return &snipEndpoint{
 		service: service,
 		prefix:  prefix,
-		baseURL: conf.BaseURL(),
+		baseURL: conf.GetBaseURL(),
 	}, nil
 }
 
