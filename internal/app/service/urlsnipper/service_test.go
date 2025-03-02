@@ -173,7 +173,7 @@ func TestUrlSnipperService_GetURL(t *testing.T) {
 
 			},
 			getURLFuncNumberOfCalls: 1,
-			wantErr:                 ErrFailedToGetUrl,
+			wantErr:                 ErrFailedToGetURL,
 		},
 	}
 

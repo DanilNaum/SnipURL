@@ -7,7 +7,7 @@ import (
 
 var (
 	ErrFailedToGenerateID = fmt.Errorf("failed to generate id")
-	ErrFailedToGetUrl     = fmt.Errorf("failed to get url")
+	ErrFailedToGetURL     = fmt.Errorf("failed to get url")
 )
 
 const _maxAttempts = 10
@@ -69,7 +69,7 @@ func (s *urlSnipperService) SetURL(ctx context.Context, url string) (string, err
 func (s *urlSnipperService) GetURL(ctx context.Context, id string) (string, error) {
 	url, err := s.storage.GetURL(ctx, id)
 	if err != nil {
-		return "", fmt.Errorf("%w: %w", ErrFailedToGetUrl, err)
+		return "", fmt.Errorf("%w: %w", ErrFailedToGetURL, err)
 	}
 	return url, nil
 }
