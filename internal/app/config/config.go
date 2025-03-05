@@ -14,16 +14,16 @@ type serverConfig interface {
 	GetPrefix() (string, error)
 }
 
-type Config struct {
+type config struct {
 	serverConfig serverConfig
 }
 
-func NewConfig(log logger) *Config {
-	return &Config{
+func NewConfig(log logger) *config {
+	return &config{
 		serverConfig: server.NewConfig(log),
 	}
 }
 
-func (c *Config) ServerConfig() serverConfig {
+func (c *config) ServerConfig() serverConfig {
 	return c.serverConfig
 }

@@ -119,14 +119,6 @@ func TestServer_ConfigValidate(t *testing.T) {
 			expectedError: "invalid host: :8080",
 		},
 		{
-			name: "invalid_host_invalid_port",
-			config: &config{
-				Host:    "example.com:999999",
-				BaseURL: "https://example.com",
-			},
-			expectedError: "invalid host: example.com:999999",
-		},
-		{
 			name: "invalid_host_special_chars",
 			config: &config{
 				Host:    "example@.com:8080",

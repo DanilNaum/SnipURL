@@ -2,7 +2,6 @@ package snipendpoint
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"io"
 	"net/http"
@@ -20,10 +19,8 @@ func (errorReader) Read(p []byte) (n int, err error) {
 }
 func TestSnipEndpoint_post(t *testing.T) {
 	type input struct {
-		method    string
 		body      string
 		bodyError bool
-		isHTTPS   bool
 		host      string
 	}
 	type mocks struct {
@@ -43,10 +40,8 @@ func TestSnipEndpoint_post(t *testing.T) {
 		{
 			name: "happy_path_http",
 			input: input{
-				method:  http.MethodPost,
-				body:    "https://example.com",
-				isHTTPS: false,
-				host:    "localhost:8080",
+				body: "https://example.com",
+				host: "http://localhost:8080",
 			},
 			mocks: mocks{
 				setURLFunc: func(ctx context.Context, url string) (string, error) {
@@ -62,10 +57,8 @@ func TestSnipEndpoint_post(t *testing.T) {
 		{
 			name: "happy_path_https",
 			input: input{
-				method:  http.MethodPost,
-				body:    "https://example.com",
-				isHTTPS: true,
-				host:    "localhost:8080",
+				body: "https://example.com",
+				host: "https://localhost:8080",
 			},
 			mocks: mocks{
 				setURLFunc: func(ctx context.Context, url string) (string, error) {
@@ -78,23 +71,12 @@ func TestSnipEndpoint_post(t *testing.T) {
 				body: "https://localhost:8080/abc123",
 			},
 		},
-		{
-			name: "wrong_method",
-			input: input{
-				method: http.MethodGet,
-				body:   "https://example.com",
-			},
-			want: want{
-				code: http.StatusMethodNotAllowed,
-				body: "Only POST requests are allowed!",
-			},
-		},
+
 		{
 			name: "service_error",
 			input: input{
-				method: http.MethodPost,
-				body:   "https://example.com",
-				host:   "localhost:8080",
+				body: "https://example.com",
+				host: "https://localhost:8080",
 			},
 			mocks: mocks{
 				setURLFunc: func(ctx context.Context, url string) (string, error) {
@@ -110,9 +92,25 @@ func TestSnipEndpoint_post(t *testing.T) {
 		{
 			name: "body_error",
 			input: input{
-				method:    http.MethodPost,
 				bodyError: true,
-				host:      "localhost:8080",
+				host:      "https://localhost:8080",
+			},
+			want: want{
+				code: http.StatusInternalServerError,
+				body: "Internal Server Error",
+			},
+		},
+		{
+			name: "host_error",
+			input: input{
+				body: "https://example.com",
+				host: "asd",
+			},
+			mocks: mocks{
+				setURLFunc: func(ctx context.Context, url string) (string, error) {
+					return "", errors.New("service error")
+				},
+				setURLFuncNumberOfCalls: 1,
 			},
 			want: want{
 				code: http.StatusInternalServerError,
@@ -126,29 +124,27 @@ func TestSnipEndpoint_post(t *testing.T) {
 			mockService := &serviceMock{
 				SetURLFunc: tt.mocks.setURLFunc,
 			}
-			baseURL := "http://"
-			if tt.input.isHTTPS {
-				baseURL = "https://"
-			}
-			baseURL += tt.input.host
+
+			baseURL := tt.input.host
+
 			endpoint := &snipEndpoint{
 				service: mockService,
 				prefix:  "/",
 				baseURL: baseURL,
 			}
+
 			var bodyReader io.Reader
 			bodyReader = strings.NewReader(tt.input.body)
 			if tt.input.bodyError {
 				bodyReader = errorReader{}
 			}
 
-			req := httptest.NewRequest(tt.input.method, "/", bodyReader)
-			if tt.input.isHTTPS {
-				req.TLS = &tls.ConnectionState{}
-			}
+			req := httptest.NewRequest(http.MethodPost, "/", bodyReader)
+
 			if tt.input.host != "" {
 				req.Host = tt.input.host
 			}
+
 			w := httptest.NewRecorder()
 
 			endpoint.post(w, req)

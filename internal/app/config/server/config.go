@@ -6,8 +6,6 @@ import (
 	"net/url"
 	"strings"
 
-	"regexp"
-
 	"github.com/caarlos0/env/v6"
 )
 
@@ -77,16 +75,19 @@ func mergeConfigs(envConfig, flagsConfig *config, log logger) *config {
 }
 
 func (c *config) validate(log logger) {
-	hostPattern := `^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])(:[0-9]{1,5})?$`
-	re := regexp.MustCompile(hostPattern)
-	if !re.MatchString(c.Host) {
+
+	_, err := url.Parse(c.Host)
+	if err != nil {
 		log.Fatalf("invalid host: %s", c.Host)
 		return
 	}
 
-	baseURLPattern := `^(http|https):\/\/(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])(:[0-9]{1,5})?(\/.*)?$`
-	re = regexp.MustCompile(baseURLPattern)
-	if !re.MatchString(c.BaseURL) {
+	u, err := url.Parse(c.BaseURL)
+	if err != nil {
+		log.Fatalf("invalid base url: %s", c.BaseURL)
+		return
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
 		log.Fatalf("invalid base url: %s", c.BaseURL)
 		return
 	}

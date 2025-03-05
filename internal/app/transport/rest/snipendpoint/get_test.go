@@ -13,8 +13,7 @@ import (
 
 func TestSnipEndpoint_get(t *testing.T) {
 	type input struct {
-		method string
-		id     string
+		id string
 	}
 	type mocks struct {
 		getURLFunc              func(ctx context.Context, id string) (string, error)
@@ -35,8 +34,7 @@ func TestSnipEndpoint_get(t *testing.T) {
 			name: "happy_path",
 
 			input: input{
-				method: http.MethodGet,
-				id:     "123",
+				id: "123",
 			},
 
 			mocks: mocks{
@@ -52,20 +50,9 @@ func TestSnipEndpoint_get(t *testing.T) {
 			},
 		},
 		{
-			name: "wrong method",
-			input: input{method: http.MethodPost,
-				id: "123",
-			},
-			want: want{
-				code: http.StatusMethodNotAllowed,
-				body: "Only GET requests are allowed!",
-			},
-		},
-		{
 			name: "service error",
 			input: input{
-				method: http.MethodGet,
-				id:     "123",
+				id: "123",
 			},
 			mocks: mocks{
 				getURLFunc: func(ctx context.Context, id string) (string, error) {
@@ -90,7 +77,7 @@ func TestSnipEndpoint_get(t *testing.T) {
 				service: mockService,
 			}
 
-			req := httptest.NewRequest(tt.input.method, "/"+tt.input.id, nil)
+			req := httptest.NewRequest(http.MethodGet, "/"+tt.input.id, nil)
 			w := httptest.NewRecorder()
 
 			endpoint.get(w, req)

@@ -37,21 +37,6 @@ func NewURLSnipperService(storage urlStorage, hasher hasher) *urlSnipperService 
 
 func (s *urlSnipperService) SetURL(ctx context.Context, url string) (string, error) {
 
-	//	I am currently using a simple ID generation algorithm that ensures
-	//	that each ID is unique, but does not guarantee how many attempts it
-	//	will take to create it.
-	//	To avoid an endless loop, the number of attempts is limited.
-
-	//	It is possible to improve this process by adding a random "salt" and
-	//	storing it in a separate table. In case of unsuccessful operations,
-	//	you can first check for a link in the table, which stores links that
-	//	cannot be encoded without a "salt". However, even this does not
-	//	guarantee a limit on the number of attempts to generate IDs,
-	//	since there are a finite number of possible IDs for a given length.
-
-	//	One solution is to increase the hash length after several unsuccessful attempts.
-	//	This will ensure the stable operation of the application, but it may lead to an
-	//	increase in the length of the original link, rather than reducing it.
 	urlCopy := url
 	for i := 0; i < _maxAttempts; i++ {
 		id := s.hasher.Hash(urlCopy)

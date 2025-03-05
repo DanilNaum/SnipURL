@@ -6,11 +6,6 @@ import (
 
 func (l *snipEndpoint) get(w http.ResponseWriter, r *http.Request) {
 
-	if r.Method != http.MethodGet {
-		http.Error(w, "Only GET requests are allowed!", http.StatusMethodNotAllowed)
-		return
-	}
-
 	id := r.PathValue("id")
 
 	url, err := l.service.GetURL(r.Context(), id)

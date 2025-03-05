@@ -1,17 +1,12 @@
 package snipendpoint
 
 import (
-	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 func (l *snipEndpoint) post(w http.ResponseWriter, r *http.Request) {
-
-	if r.Method != http.MethodPost {
-		http.Error(w, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
-		return
-	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -19,16 +14,19 @@ func (l *snipEndpoint) post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := string(body)
+	originalUrl := string(body)
 
-	id, err := l.service.SetURL(r.Context(), url)
+	id, err := l.service.SetURL(r.Context(), originalUrl)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	// Формируем полный URL
-	fullURL := fmt.Sprintf("%s/%s", l.baseURL, id)
+	fullURL, err := url.JoinPath(l.baseURL, id)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(fullURL))
