@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,24 +14,34 @@ import (
 	"github.com/DanilNaum/SnipURL/pkg/utils/hash"
 	"github.com/DanilNaum/SnipURL/pkg/utils/httpserver"
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
 func main() {
-	logger := log.New(os.Stdout, "URL Snipper: ", log.LstdFlags)
-	logger.Println("App is running...")
-	err := run(logger)
+	// создаём предустановленный регистратор zap
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		// вызываем панику, если ошибка
+		panic(err)
+	}
+	defer logger.Sync()
+
+	// делаем регистратор SugaredLogger
+	sugar := logger.Sugar()
+	sugar.Info("App is running...")
+
+	err = run(sugar)
 
 	if err != nil && !errors.Is(err, context.Canceled) {
-		logger.Printf("App fail with error %s", err)
-		os.Exit(1)
+		sugar.Fatal("App fail with error %s", err)
 	}
 
-	logger.Println("App is gracefully shutdown")
+	sugar.Info("App is gracefully shutdown")
 	os.Exit(0)
 }
 
-func run(log *log.Logger) error {
+func run(log *zap.SugaredLogger) error {
 
 	conf := config.NewConfig(log)
 
@@ -49,7 +58,7 @@ func run(log *log.Logger) error {
 
 	mux := chi.NewRouter()
 
-	controller, err := rest.NewController(mux, conf.ServerConfig(), urlSnipperService)
+	controller, err := rest.NewController(mux, conf.ServerConfig(), urlSnipperService, log)
 
 	if err != nil {
 		return err
@@ -66,7 +75,7 @@ func run(log *log.Logger) error {
 		<-ctx.Done()
 		err := httpServer.Shutdown()
 		if err != nil {
-			log.Printf("shutdown error: %s", err)
+			log.Errorf("shutdown error: %s", err)
 		}
 	}()
 
