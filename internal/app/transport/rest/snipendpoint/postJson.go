@@ -8,8 +8,8 @@ import (
 	"net/url"
 )
 
-func (l *snipEndpoint) postJson(w http.ResponseWriter, r *http.Request) {
-	var req postJsonRequest
+func (l *snipEndpoint) postJSON(w http.ResponseWriter, r *http.Request) {
+	var req postJSONRequest
 	var buf bytes.Buffer
 
 	_, err := buf.ReadFrom(r.Body)
@@ -37,7 +37,7 @@ func (l *snipEndpoint) postJson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := json.Marshal(&postJsonResponse{
+	resp, err := json.Marshal(&postJSONResponse{
 		Result: fullURL,
 	})
 

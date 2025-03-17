@@ -1,9 +1,9 @@
 package snipendpoint
 
-type postJsonRequest struct {
+type postJSONRequest struct {
 	URL string `json:"url"`
 }
 
-type postJsonResponse struct {
+type postJSONResponse struct {
 	Result string `json:"result"`
 }

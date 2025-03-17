@@ -153,7 +153,7 @@ func TestSnipEndpoint_postJson(t *testing.T) {
 
 			w := httptest.NewRecorder()
 
-			endpoint.postJson(w, req)
+			endpoint.postJSON(w, req)
 
 			require.Equal(t, tt.want.code, w.Code)
 			require.Equal(t, strings.TrimSpace(tt.want.body), strings.TrimSpace(w.Body.String()))
