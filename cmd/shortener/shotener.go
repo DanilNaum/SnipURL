@@ -34,7 +34,7 @@ func main() {
 	err = run(sugar)
 
 	if err != nil && !errors.Is(err, context.Canceled) {
-		sugar.Fatal("App fail with error %s", err)
+		sugar.Fatalf("App fail with error %s", err.Error())
 	}
 
 	sugar.Info("App is gracefully shutdown")
