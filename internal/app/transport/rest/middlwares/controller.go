@@ -18,5 +18,10 @@ func NewMiddleware(logger logger) *middleware {
 
 func (m *middleware) Register(mux *chi.Mux) *chi.Mux {
 	mux.Use(m.logging)
+
+	mux.Use(m.gzipPack)
+
+	mux.Use(m.gzipUnpack)
+
 	return mux
 }
