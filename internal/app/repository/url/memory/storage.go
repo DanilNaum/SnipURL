@@ -23,16 +23,16 @@ func NewStorage() *storage {
 	}
 }
 
-func (s *storage) SetURL(_ context.Context, id, url string) error {
+func (s *storage) SetURL(_ context.Context, id, url string) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if oldURL, ok := s.urls[id]; ok && oldURL != url {
-		return ErrIDIsBusy
+		return -1, ErrIDIsBusy
 	}
 
 	s.urls[id] = url
-	return nil
+	return len(s.urls), nil
 }
 
 func (s *storage) GetURL(_ context.Context, id string) (string, error) {

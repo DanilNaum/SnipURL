@@ -21,7 +21,7 @@ var _ urlStorage = &urlStorageMock{}
 //			GetURLFunc: func(ctx context.Context, id string) (string, error) {
 //				panic("mock out the GetURL method")
 //			},
-//			SetURLFunc: func(ctx context.Context, id string, url string) error {
+//			SetURLFunc: func(ctx context.Context, id string, url string) (int, error) {
 //				panic("mock out the SetURL method")
 //			},
 //		}
@@ -35,7 +35,7 @@ type urlStorageMock struct {
 	GetURLFunc func(ctx context.Context, id string) (string, error)
 
 	// SetURLFunc mocks the SetURL method.
-	SetURLFunc func(ctx context.Context, id string, url string) error
+	SetURLFunc func(ctx context.Context, id string, url string) (int, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -97,7 +97,7 @@ func (mock *urlStorageMock) GetURLCalls() []struct {
 }
 
 // SetURL calls SetURLFunc.
-func (mock *urlStorageMock) SetURL(ctx context.Context, id string, url string) error {
+func (mock *urlStorageMock) SetURL(ctx context.Context, id string, url string) (int, error) {
 	if mock.SetURLFunc == nil {
 		panic("urlStorageMock.SetURLFunc: method is nil but urlStorage.SetURL was just called")
 	}

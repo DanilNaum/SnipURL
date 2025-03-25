@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,31 +11,49 @@ import (
 	"github.com/DanilNaum/SnipURL/internal/app/repository/url/memory"
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 	rest "github.com/DanilNaum/SnipURL/internal/app/transport/rest"
+	"github.com/DanilNaum/SnipURL/pkg/utils/dumper"
 	"github.com/DanilNaum/SnipURL/pkg/utils/hash"
 	"github.com/DanilNaum/SnipURL/pkg/utils/httpserver"
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
 func main() {
-	logger := log.New(os.Stdout, "URL Snipper: ", log.LstdFlags)
-	logger.Println("App is running...")
-	err := run(logger)
-
-	if err != nil && !errors.Is(err, context.Canceled) {
-		logger.Printf("App fail with error %s", err)
+	logger, err := zap.NewDevelopment()
+	if err != nil {
 		os.Exit(1)
 	}
 
-	logger.Println("App is gracefully shutdown")
+	defer logger.Sync()
+
+	sugar := logger.Sugar()
+
+	sugar.Info("App is running...")
+
+	err = run(sugar)
+
+	if err != nil && !errors.Is(err, context.Canceled) {
+		sugar.Fatalf("App fail with error %s", err.Error())
+	}
+
+	sugar.Info("App is gracefully shutdown")
 	os.Exit(0)
 }
 
-func run(log *log.Logger) error {
+func run(log *zap.SugaredLogger) error {
 
 	conf := config.NewConfig(log)
 
+	dumpFile, err := os.OpenFile(conf.DumpConfig().GetPath(), os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return err
+	}
+
+	defer dumpFile.Close()
+
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+
 	defer cancel()
 
 	services, ctx := errgroup.WithContext(ctx)
@@ -45,11 +62,18 @@ func run(log *log.Logger) error {
 
 	hash := hash.NewHasher(8)
 
-	urlSnipperService := urlsnipper.NewURLSnipperService(storage, hash)
+	dump := dumper.NewDumper(dumpFile, log)
+
+	urlSnipperService := urlsnipper.NewURLSnipperService(storage, hash, dump, log)
+
+	err = urlSnipperService.RestoreStorage()
+	if err != nil {
+		return err
+	}
 
 	mux := chi.NewRouter()
 
-	controller, err := rest.NewController(mux, conf.ServerConfig(), urlSnipperService)
+	controller, err := rest.NewController(mux, conf.ServerConfig(), urlSnipperService, log)
 
 	if err != nil {
 		return err
@@ -66,7 +90,7 @@ func run(log *log.Logger) error {
 		<-ctx.Done()
 		err := httpServer.Shutdown()
 		if err != nil {
-			log.Printf("shutdown error: %s", err)
+			log.Errorf("shutdown error: %s", err)
 		}
 	}()
 
