@@ -80,9 +80,11 @@ func TestStorage_SetURL(t *testing.T) {
 				mu:   sync.RWMutex{},
 			}
 
-			err := s.SetURL(context.Background(), tt.args.id, tt.args.url)
+			l, err := s.SetURL(context.Background(), tt.args.id, tt.args.url)
 			require.ErrorIs(t, err, tt.wantErr)
-
+			if err == nil {
+				require.Equal(t, l, len(tt.storageStateAfter))
+			}
 			require.Equal(t, tt.storageStateAfter, s.urls)
 
 		})

@@ -11,6 +11,7 @@ import (
 	"github.com/DanilNaum/SnipURL/internal/app/repository/url/memory"
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 	rest "github.com/DanilNaum/SnipURL/internal/app/transport/rest"
+	"github.com/DanilNaum/SnipURL/pkg/utils/dumper"
 	"github.com/DanilNaum/SnipURL/pkg/utils/hash"
 	"github.com/DanilNaum/SnipURL/pkg/utils/httpserver"
 	"github.com/go-chi/chi/v5"
@@ -45,6 +46,12 @@ func run(log *zap.SugaredLogger) error {
 
 	conf := config.NewConfig(log)
 
+	dumpFile, err := os.OpenFile(conf.DumpConfig().GetPath(), os.O_APPEND|os.O_RDWR, 0666)
+	if err != nil {
+		return err
+	}
+	defer dumpFile.Close()
+
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
@@ -54,7 +61,14 @@ func run(log *zap.SugaredLogger) error {
 
 	hash := hash.NewHasher(8)
 
-	urlSnipperService := urlsnipper.NewURLSnipperService(storage, hash)
+	dump := dumper.NewDumper(dumpFile, log)
+
+	urlSnipperService := urlsnipper.NewURLSnipperService(storage, hash, dump)
+
+	err = urlSnipperService.RestoreStorage()
+	if err != nil {
+		return err
+	}
 
 	mux := chi.NewRouter()
 
