@@ -20,16 +20,15 @@ import (
 )
 
 func main() {
-	// создаём предустановленный регистратор zap
 	logger, err := zap.NewDevelopment()
 	if err != nil {
-		// вызываем панику, если ошибка
-		panic(err)
+		os.Exit(1)
 	}
+
 	defer logger.Sync()
 
-	// делаем регистратор SugaredLogger
 	sugar := logger.Sugar()
+
 	sugar.Info("App is running...")
 
 	err = run(sugar)
@@ -50,9 +49,11 @@ func run(log *zap.SugaredLogger) error {
 	if err != nil {
 		return err
 	}
+
 	defer dumpFile.Close()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+
 	defer cancel()
 
 	services, ctx := errgroup.WithContext(ctx)
