@@ -25,7 +25,7 @@ func NewDumpConfig(log logger) *dumpConfig {
 }
 
 func configFromFlags() *dumpConfig {
-	path := flag.String("f", "../../dump/storage.json", "path to dump file")
+	path := flag.String("f", "storage.json", "path to dump file")
 	flag.Parse()
 	return &dumpConfig{
 		Path: *path,

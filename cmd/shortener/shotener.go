@@ -46,7 +46,7 @@ func run(log *zap.SugaredLogger) error {
 
 	conf := config.NewConfig(log)
 
-	dumpFile, err := os.OpenFile(conf.DumpConfig().GetPath(), os.O_APPEND|os.O_RDWR, 0666)
+	dumpFile, err := os.OpenFile(conf.DumpConfig().GetPath(), os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		return err
 	}
