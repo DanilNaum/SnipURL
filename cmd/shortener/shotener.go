@@ -63,7 +63,7 @@ func run(log *zap.SugaredLogger) error {
 
 	dump := dumper.NewDumper(dumpFile, log)
 
-	urlSnipperService := urlsnipper.NewURLSnipperService(storage, hash, dump)
+	urlSnipperService := urlsnipper.NewURLSnipperService(storage, hash, dump, log)
 
 	err = urlSnipperService.RestoreStorage()
 	if err != nil {

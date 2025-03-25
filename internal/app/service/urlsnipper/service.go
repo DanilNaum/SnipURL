@@ -31,17 +31,23 @@ type dumper interface {
 	ReadAll() (chan dump.Record, error)
 }
 
+type logger interface {
+	Errorf(string, ...interface{})
+}
+
 type urlSnipperService struct {
 	storage urlStorage
 	hasher  hasher
 	dumper  dumper
+	logger  logger
 }
 
-func NewURLSnipperService(storage urlStorage, hasher hasher, dumper dumper) *urlSnipperService {
+func NewURLSnipperService(storage urlStorage, hasher hasher, dumper dumper, logger logger) *urlSnipperService {
 	return &urlSnipperService{
 		storage: storage,
 		hasher:  hasher,
 		dumper:  dumper,
+		logger:  logger,
 	}
 }
 
@@ -60,7 +66,7 @@ func (s *urlSnipperService) SetURL(ctx context.Context, url string) (string, err
 
 			err = s.dumper.Add(rec)
 			if err != nil {
-				// TODO: add logger
+				s.logger.Errorf("failed to dump record: %v", err)
 			}
 			return id, nil
 		}
