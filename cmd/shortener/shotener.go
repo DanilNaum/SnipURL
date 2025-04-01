@@ -59,8 +59,8 @@ func run(log *zap.SugaredLogger) error {
 	defer cancel()
 
 	psqlStorage := psql.NewStorage(nil)
-	if conf.DbConfig().GetDSN() != "" {
-		pgConf := pg.NewConnConfigFromDsnString(conf.DbConfig().GetDSN())
+	if conf.DBConfig().GetDSN() != "" {
+		pgConf := pg.NewConnConfigFromDsnString(conf.DBConfig().GetDSN())
 
 		pgConn := pg.NewConnection(ctx, pgConf, log)
 		if pgConn == nil {

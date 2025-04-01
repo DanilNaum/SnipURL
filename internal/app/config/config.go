@@ -62,6 +62,6 @@ func (c *config) DumpConfig() dumpConfig {
 	return c.dumpConfig
 }
 
-func (c *config) DbConfig() dbConfig {
+func (c *config) DBConfig() dbConfig {
 	return c.dbConfig
 }
