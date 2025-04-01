@@ -12,14 +12,14 @@ type logger interface {
 }
 
 type dbConfig struct {
-	DbDSN *string `env:"DATABASE_DSN"`
+	DBDSN *string `env:"DATABASE_DSN"`
 }
 
 func DBConfigFromFlags() *dbConfig {
 	dsn := flag.String("d", "", "dsn")
 
 	return &dbConfig{
-		DbDSN: dsn,
+		DBDSN: dsn,
 	}
 }
 
@@ -43,13 +43,13 @@ func MergeDBConfigs(envConfig, flagsConfig *dbConfig, log logger) *dbConfig {
 		return nil
 	}
 
-	if envConfig.DbDSN == nil {
-		envConfig.DbDSN = flagsConfig.DbDSN
+	if envConfig.DBDSN == nil {
+		envConfig.DBDSN = flagsConfig.DBDSN
 	}
 
 	return envConfig
 }
 
 func (c *dbConfig) GetDSN() string {
-	return *c.DbDSN
+	return *c.DBDSN
 }
