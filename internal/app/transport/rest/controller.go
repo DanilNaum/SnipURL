@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	middlewares "github.com/DanilNaum/SnipURL/internal/app/transport/rest/middlwares"
+	psqlping "github.com/DanilNaum/SnipURL/internal/app/transport/rest/psqlPing"
 	"github.com/DanilNaum/SnipURL/internal/app/transport/rest/snipendpoint"
 	"github.com/go-chi/chi/v5"
 )
@@ -23,7 +24,11 @@ type service interface {
 	SetURL(ctx context.Context, url string) (string, error)
 }
 
-func NewController(mux *chi.Mux, conf config, service service, logger logger) (http.Handler, error) {
+type psqlStoragePinger interface {
+	Ping(context.Context) error
+}
+
+func NewController(mux *chi.Mux, conf config, service service, psqlStoragePinger psqlStoragePinger, logger logger) (http.Handler, error) {
 
 	middlewares := middlewares.NewMiddleware(logger)
 
@@ -34,6 +39,9 @@ func NewController(mux *chi.Mux, conf config, service service, logger logger) (h
 		return nil, err
 	}
 
+	psqlPingEndpoint := psqlping.NewPsqlPingEndpoint(psqlStoragePinger)
+
+	psqlPingEndpoint.Register(muxWithMiddlewares)
 	snipEndpoint.Register(muxWithMiddlewares)
 
 	return muxWithMiddlewares, nil

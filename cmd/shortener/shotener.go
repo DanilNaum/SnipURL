@@ -9,8 +9,10 @@ import (
 
 	"github.com/DanilNaum/SnipURL/internal/app/config"
 	"github.com/DanilNaum/SnipURL/internal/app/repository/url/memory"
+	"github.com/DanilNaum/SnipURL/internal/app/repository/url/psql"
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 	rest "github.com/DanilNaum/SnipURL/internal/app/transport/rest"
+	"github.com/DanilNaum/SnipURL/pkg/pg"
 	"github.com/DanilNaum/SnipURL/pkg/utils/dumper"
 	"github.com/DanilNaum/SnipURL/pkg/utils/hash"
 	"github.com/DanilNaum/SnipURL/pkg/utils/httpserver"
@@ -56,6 +58,18 @@ func run(log *zap.SugaredLogger) error {
 
 	defer cancel()
 
+	psqlStorage := psql.NewStorage(nil)
+	if conf.DbConfig().GetDSN() != "" {
+		pgConf := pg.NewConnConfigFromDsnString(conf.DbConfig().GetDSN())
+
+		pgConn := pg.NewConnection(ctx, pgConf, log)
+		if pgConn == nil {
+			return errors.New("pg connection is nil")
+		}
+		defer pgConn.Close()
+		psqlStorage = psql.NewStorage(pgConn)
+	}
+
 	services, ctx := errgroup.WithContext(ctx)
 
 	storage := memory.NewStorage()
@@ -73,7 +87,7 @@ func run(log *zap.SugaredLogger) error {
 
 	mux := chi.NewRouter()
 
-	controller, err := rest.NewController(mux, conf.ServerConfig(), urlSnipperService, log)
+	controller, err := rest.NewController(mux, conf.ServerConfig(), urlSnipperService, psqlStorage, log)
 
 	if err != nil {
 		return err

@@ -1,6 +1,9 @@
 package config
 
 import (
+	"flag"
+
+	"github.com/DanilNaum/SnipURL/internal/app/config/db"
 	"github.com/DanilNaum/SnipURL/internal/app/config/dump"
 	"github.com/DanilNaum/SnipURL/internal/app/config/server"
 )
@@ -19,15 +22,35 @@ type dumpConfig interface {
 	GetPath() string
 }
 
+type dbConfig interface {
+	GetDSN() string
+}
+
 type config struct {
 	serverConfig serverConfig
 	dumpConfig   dumpConfig
+	dbConfig     dbConfig
 }
 
 func NewConfig(log logger) *config {
+	dbConfigFlag := db.DBConfigFromFlags()
+	dumpConfigFlags := dump.DumpConfigFromFlags()
+	serverConfigFlags := server.ServerConfigFromFlags()
+
+	flag.Parse()
+
+	dbConfigEnv := db.DBConfigFromEnv(log)
+	dumpConfigEnv := dump.DumpConfigFromEnv(log)
+	serverConfigEnv := server.ServerConfigFromEnv(log)
+
+	serverConfig := server.MergeServerConfigs(serverConfigEnv, serverConfigFlags, log)
+	dumpConfig := dump.MergeDumpConfigs(dumpConfigEnv, dumpConfigFlags, log)
+	dbConfig := db.MergeDBConfigs(dbConfigEnv, dbConfigFlag, log)
+
 	return &config{
-		serverConfig: server.NewConfig(log),
-		dumpConfig:   dump.NewDumpConfig(log),
+		serverConfig: serverConfig,
+		dumpConfig:   dumpConfig,
+		dbConfig:     dbConfig,
 	}
 }
 
@@ -37,4 +60,8 @@ func (c *config) ServerConfig() serverConfig {
 
 func (c *config) DumpConfig() dumpConfig {
 	return c.dumpConfig
+}
+
+func (c *config) DbConfig() dbConfig {
+	return c.dbConfig
 }

@@ -12,27 +12,17 @@ type logger interface {
 }
 
 type dumpConfig struct {
-	Path string `env:"FILE_STORAGE_PATH"`
+	Path *string `env:"FILE_STORAGE_PATH"`
 }
 
-func NewDumpConfig(log logger) *dumpConfig {
-	envConfig := configFromEnv(log)
-	flagsConfig := configFromFlags()
-
-	c := mergeConfigs(envConfig, flagsConfig, log)
-
-	return c
-}
-
-func configFromFlags() *dumpConfig {
+func DumpConfigFromFlags() *dumpConfig {
 	path := flag.String("f", "storage.json", "path to dump file")
-	flag.Parse()
 	return &dumpConfig{
-		Path: *path,
+		Path: path,
 	}
 }
 
-func configFromEnv(log logger) *dumpConfig {
+func DumpConfigFromEnv(log logger) *dumpConfig {
 	c := &dumpConfig{}
 	err := env.Parse(c)
 	if err != nil {
@@ -41,7 +31,7 @@ func configFromEnv(log logger) *dumpConfig {
 	return c
 }
 
-func mergeConfigs(envConfig, flagsConfig *dumpConfig, log logger) *dumpConfig {
+func MergeDumpConfigs(envConfig, flagsConfig *dumpConfig, log logger) *dumpConfig {
 	if envConfig == nil {
 		log.Fatalf("error env config is nil")
 		return nil
@@ -52,7 +42,7 @@ func mergeConfigs(envConfig, flagsConfig *dumpConfig, log logger) *dumpConfig {
 		return nil
 	}
 
-	if envConfig.Path == "" {
+	if envConfig.Path == nil {
 		envConfig.Path = flagsConfig.Path
 	}
 
@@ -60,5 +50,5 @@ func mergeConfigs(envConfig, flagsConfig *dumpConfig, log logger) *dumpConfig {
 }
 
 func (c *dumpConfig) GetPath() string {
-	return c.Path
+	return *c.Path
 }
