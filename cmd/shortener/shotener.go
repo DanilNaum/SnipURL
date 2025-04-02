@@ -12,11 +12,13 @@ import (
 	"github.com/DanilNaum/SnipURL/internal/app/repository/url/psql"
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 	rest "github.com/DanilNaum/SnipURL/internal/app/transport/rest"
+	"github.com/DanilNaum/SnipURL/pkg/migration"
 	"github.com/DanilNaum/SnipURL/pkg/pg"
 	"github.com/DanilNaum/SnipURL/pkg/utils/dumper"
 	"github.com/DanilNaum/SnipURL/pkg/utils/hash"
 	"github.com/DanilNaum/SnipURL/pkg/utils/httpserver"
 	"github.com/go-chi/chi/v5"
+
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -58,8 +60,22 @@ func run(log *zap.SugaredLogger) error {
 
 	defer cancel()
 
-	psqlStorage := psql.NewStorage(nil)
+	type storage interface {
+		Ping(ctx context.Context) error
+		GetURL(ctx context.Context, id string) (string, error)
+		SetURL(ctx context.Context, id, url string) (int, error)
+	}
+	dump := dumper.NewDumper(dumpFile, log)
+
+	var urlStorage storage
+
 	if conf.DBConfig().GetDSN() != "" {
+		migrator := migration.NewMigrator(conf.DBConfig().GetDSN(), migration.WithRelativePath("migrations"))
+		err = migrator.Migrate()
+		if err != nil {
+			return err
+		}
+
 		pgConf := pg.NewConnConfigFromDsnString(conf.DBConfig().GetDSN())
 
 		pgConn := pg.NewConnection(ctx, pgConf, log)
@@ -67,27 +83,25 @@ func run(log *zap.SugaredLogger) error {
 			return errors.New("pg connection is nil")
 		}
 		defer pgConn.Close()
-		psqlStorage = psql.NewStorage(pgConn)
+		urlStorage = psql.NewStorage(pgConn)
+	} else {
+		storage := memory.NewStorage()
+		err := storage.RestoreStorage(dump)
+		if err != nil {
+			return err
+		}
+		urlStorage = storage
 	}
 
 	services, ctx := errgroup.WithContext(ctx)
 
-	storage := memory.NewStorage()
-
 	hash := hash.NewHasher(8)
 
-	dump := dumper.NewDumper(dumpFile, log)
-
-	urlSnipperService := urlsnipper.NewURLSnipperService(storage, hash, dump, log)
-
-	err = urlSnipperService.RestoreStorage()
-	if err != nil {
-		return err
-	}
+	urlSnipperService := urlsnipper.NewURLSnipperService(urlStorage, hash, dump, log)
 
 	mux := chi.NewRouter()
 
-	controller, err := rest.NewController(mux, conf.ServerConfig(), urlSnipperService, psqlStorage, log)
+	controller, err := rest.NewController(mux, conf.ServerConfig(), urlSnipperService, urlStorage, log)
 
 	if err != nil {
 		return err

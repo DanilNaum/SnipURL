@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
 	"sync"
 	"testing"
 
@@ -69,7 +70,7 @@ func TestStorage_SetURL(t *testing.T) {
 			storageStateAfter: map[string]string{
 				"abc123": "https://example.com",
 			},
-			wantErr: ErrIDIsBusy,
+			wantErr: urlstorage.ErrIDIsBusy,
 		},
 	}
 
@@ -119,7 +120,7 @@ func TestStorage_GetURL(t *testing.T) {
 			id: "nonexistent",
 
 			want:    "",
-			wantErr: ErrNotFound,
+			wantErr: urlstorage.ErrNotFound,
 		},
 		{
 			name: "success_get_with_multiple_urls",
@@ -143,7 +144,7 @@ func TestStorage_GetURL(t *testing.T) {
 			id: "",
 
 			want:    "",
-			wantErr: ErrNotFound,
+			wantErr: urlstorage.ErrNotFound,
 		},
 	}
 

@@ -84,18 +84,3 @@ func (s *urlSnipperService) GetURL(ctx context.Context, id string) (string, erro
 	}
 	return url, nil
 }
-
-func (s *urlSnipperService) RestoreStorage() error {
-	records, err := s.dumper.ReadAll()
-	if err != nil {
-		return err
-	}
-
-	for record := range records {
-		_, err := s.storage.SetURL(context.Background(), record.ShortURL, record.OriginalURL)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
