@@ -23,11 +23,11 @@ func NewStorage(conn connection) *storage {
 	}
 }
 
-func (c *storage) Ping(ctx context.Context) error {
-	if c.conn == nil {
+func (s *storage) Ping(ctx context.Context) error {
+	if s.conn == nil {
 		return errors.New("connection is nil")
 	}
-	err := c.conn.Master().Ping(ctx)
+	err := s.conn.Master().Ping(ctx)
 	if err != nil {
 		return err
 	}

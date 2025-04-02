@@ -24,7 +24,7 @@ func WithAbsolutePath(path string) migrationFolderPathOpt {
 
 func WithRelativePath(path string) migrationFolderPathOpt {
 	return func() string {
-		return "file://../../" + path
+		return "file://" + path
 	}
 }
 
@@ -44,12 +44,14 @@ func (mig *migrator) Migrate() error {
 	}
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		return err
+	}
 	m, err := migrate.NewWithDatabaseInstance(
 		mig.migrationFolderPath,
 		mig.dbName, driver)
 	if err != nil {
 		return err
-
 	}
 	m.Up()
 	return nil
