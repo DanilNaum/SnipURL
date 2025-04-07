@@ -9,7 +9,7 @@ import (
 )
 
 type dumper interface {
-	ReadAll() (chan dump.Record, error)
+	ReadAll() (chan dump.URLRecord, error)
 }
 
 type storage struct {
@@ -32,7 +32,8 @@ func (s *storage) SetURL(_ context.Context, id, url string) (int, error) {
 	defer s.mu.Unlock()
 
 	if oldURL, ok := s.urls[id]; ok && oldURL != url {
-		return -1, urlstorage.ErrIDIsBusy
+		return 0, urlstorage.ErrIDIsBusy
+
 	}
 
 	s.urls[id] = url

@@ -31,30 +31,23 @@ func main() {
 
 	defer logger.Sync()
 
-	sugar := logger.Sugar()
+	sugarLogger := logger.Sugar()
 
-	sugar.Info("App is running...")
+	sugarLogger.Info("App is running...")
 
-	err = run(sugar)
+	err = run(sugarLogger)
 
 	if err != nil && !errors.Is(err, context.Canceled) {
-		sugar.Fatalf("App fail with error %s", err.Error())
+		sugarLogger.Fatalf("App fail with error %s", err.Error())
 	}
 
-	sugar.Info("App is gracefully shutdown")
+	sugarLogger.Info("App is gracefully shutdown")
 	os.Exit(0)
 }
 
 func run(log *zap.SugaredLogger) error {
 
 	conf := config.NewConfig(log)
-
-	dumpFile, err := os.OpenFile(conf.DumpConfig().GetPath(), os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		return err
-	}
-
-	defer dumpFile.Close()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 
@@ -65,13 +58,17 @@ func run(log *zap.SugaredLogger) error {
 		GetURL(ctx context.Context, id string) (string, error)
 		SetURL(ctx context.Context, id, url string) (int, error)
 	}
-	dump := dumper.NewDumper(dumpFile, log)
+
+	dump, err := dumper.NewDumper(conf.DumpConfig().GetPath(), log)
+	if err != nil {
+		return err
+	}
 
 	var urlStorage storage
 
 	if conf.DBConfig().GetDSN() != "" {
 		migrator := migration.NewMigrator(conf.DBConfig().GetDSN(), migration.WithRelativePath("migrations"))
-		err = migrator.Migrate()
+		err := migrator.Migrate()
 		if err != nil {
 			return err
 		}
@@ -86,11 +83,13 @@ func run(log *zap.SugaredLogger) error {
 		urlStorage = psql.NewStorage(pgConn)
 	} else {
 		storage := memory.NewStorage()
+
 		err := storage.RestoreStorage(dump)
 		if err != nil {
 			return err
 		}
 		urlStorage = storage
+		defer dump.Close()
 	}
 
 	services, ctx := errgroup.WithContext(ctx)

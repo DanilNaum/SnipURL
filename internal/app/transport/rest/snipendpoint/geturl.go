@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-func (l *snipEndpoint) get(w http.ResponseWriter, r *http.Request) {
+func (l *snipEndpoint) getURL(w http.ResponseWriter, r *http.Request) {
 
 	id := r.PathValue("id")
 

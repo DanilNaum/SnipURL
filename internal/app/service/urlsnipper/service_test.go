@@ -136,7 +136,7 @@ func TestUrlSnipperService_SetURL(t *testing.T) {
 			}
 
 			mockDumper := &dumperMock{
-				AddFunc: func(record *dump.Record) error {
+				AddFunc: func(record *dump.URLRecord) error {
 					return nil
 				},
 			}

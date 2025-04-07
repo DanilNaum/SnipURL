@@ -6,7 +6,7 @@ import (
 	"net/url"
 )
 
-func (l *snipEndpoint) post(w http.ResponseWriter, r *http.Request) {
+func (l *snipEndpoint) createShortURL(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -22,12 +22,12 @@ func (l *snipEndpoint) post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fullURL, err := url.JoinPath(l.baseURL, id)
+	fullShortURL, err := url.JoinPath(l.baseURL, id)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(fullURL))
+	w.Write([]byte(fullShortURL))
 }

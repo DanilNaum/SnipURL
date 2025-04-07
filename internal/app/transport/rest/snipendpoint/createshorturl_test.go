@@ -17,7 +17,7 @@ type errorReader struct{}
 func (errorReader) Read(p []byte) (n int, err error) {
 	return 0, errors.New("simulated read error")
 }
-func TestSnipEndpoint_post(t *testing.T) {
+func TestSnipEndpoint_createShortURL(t *testing.T) {
 	type input struct {
 		body      string
 		bodyError bool
@@ -147,7 +147,7 @@ func TestSnipEndpoint_post(t *testing.T) {
 
 			w := httptest.NewRecorder()
 
-			endpoint.post(w, req)
+			endpoint.createShortURL(w, req)
 
 			require.Equal(t, tt.want.code, w.Code)
 			require.Equal(t, strings.TrimSpace(tt.want.body), strings.TrimSpace(w.Body.String()))

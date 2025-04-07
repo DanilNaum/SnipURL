@@ -16,7 +16,7 @@ const _maxAttempts = 10
 
 //go:generate moq -out mock_url_storage_moq_test.go . urlStorage
 type urlStorage interface {
-	SetURL(ctx context.Context, id, url string) (int, error)
+	SetURL(ctx context.Context, id, url string) (length int, err error)
 	GetURL(ctx context.Context, id string) (string, error)
 }
 
@@ -27,8 +27,8 @@ type hasher interface {
 
 //go:generate moq -out mock_dumper_moq_test.go . dumper
 type dumper interface {
-	Add(record *dump.Record) error
-	ReadAll() (chan dump.Record, error)
+	Add(record *dump.URLRecord) error
+	ReadAll() (chan dump.URLRecord, error)
 }
 
 type logger interface {
@@ -56,10 +56,10 @@ func (s *urlSnipperService) SetURL(ctx context.Context, url string) (string, err
 	urlCopy := url
 	for i := 0; i < _maxAttempts; i++ {
 		id := s.hasher.Hash(urlCopy)
-		l, err := s.storage.SetURL(ctx, id, url)
+		length, err := s.storage.SetURL(ctx, id, url)
 		if err == nil {
-			rec := &dump.Record{
-				UUID:        l,
+			rec := &dump.URLRecord{
+				UUID:        length,
 				ShortURL:    id,
 				OriginalURL: url,
 			}

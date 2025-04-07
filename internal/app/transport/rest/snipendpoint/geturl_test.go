@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSnipEndpoint_get(t *testing.T) {
+func TestSnipEndpoint_getURL(t *testing.T) {
 	type input struct {
 		id string
 	}
@@ -80,7 +80,7 @@ func TestSnipEndpoint_get(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/"+tt.input.id, nil)
 			w := httptest.NewRecorder()
 
-			endpoint.get(w, req)
+			endpoint.getURL(w, req)
 
 			require.Equal(t, tt.want.code, w.Code, "Expected status code %d, got %d", tt.want.code, w.Code)
 

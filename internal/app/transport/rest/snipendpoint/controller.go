@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	endpointGet      = "/{id}"
-	endpointPost     = "/"
-	endpointPostJSON = "/api/shorten"
+	endpointGetURL             = "/{id}"
+	endpointCreateShortURL     = "/"
+	endpointCreateShortURLJSON = "/api/shorten"
 )
 
 type config interface {
@@ -43,8 +43,8 @@ func NewSnipEndpoint(service service, conf config) (*snipEndpoint, error) {
 
 func (l *snipEndpoint) Register(r *chi.Mux) {
 	r.Route(l.prefix, func(r chi.Router) {
-		r.Post(endpointPost, l.post)
-		r.Get(endpointGet, l.get)
-		r.Post(endpointPostJSON, l.postJSON)
+		r.Post(endpointCreateShortURL, l.createShortURL)
+		r.Get(endpointGetURL, l.getURL)
+		r.Post(endpointCreateShortURLJSON, l.createShortURLJSON)
 	})
 }
