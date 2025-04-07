@@ -18,20 +18,25 @@ type dumper struct {
 	logger logger
 }
 
-type Record struct {
+type URLRecord struct {
 	UUID        int    `json:"uuid"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
 
-func NewDumper(file *os.File, log logger) *dumper {
+func NewDumper(path string, log logger) (*dumper, error) {
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return nil, err
+	}
+
 	return &dumper{
 		file:   file,
 		logger: log,
-	}
+	}, nil
 }
 
-func (d *dumper) Add(record *Record) error {
+func (d *dumper) Add(record *URLRecord) error {
 	data, err := json.Marshal(record)
 
 	if err != nil {
@@ -48,8 +53,8 @@ func (d *dumper) Add(record *Record) error {
 	return nil
 }
 
-func (d *dumper) ReadAll() (chan Record, error) {
-	c := make(chan Record, 10)
+func (d *dumper) ReadAll() (chan URLRecord, error) {
+	c := make(chan URLRecord, 10)
 	go func() {
 		defer close(c)
 		writer := bufio.NewReader(d.file)
@@ -58,7 +63,7 @@ func (d *dumper) ReadAll() (chan Record, error) {
 				d.logger.Fatalf("error read data from file: %s", err)
 			}
 
-			var record Record
+			var record URLRecord
 			err := json.Unmarshal(data, &record)
 			if err != nil {
 				d.logger.Fatalf("error unmarshal data: %s", err)
@@ -68,4 +73,8 @@ func (d *dumper) ReadAll() (chan Record, error) {
 
 	}()
 	return c, nil
+}
+
+func (d *dumper) Close() error {
+	return d.file.Close()
 }

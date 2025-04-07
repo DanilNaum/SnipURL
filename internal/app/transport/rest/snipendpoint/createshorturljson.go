@@ -8,7 +8,7 @@ import (
 	"net/url"
 )
 
-func (l *snipEndpoint) postJSON(w http.ResponseWriter, r *http.Request) {
+func (l *snipEndpoint) createShortURLJSON(w http.ResponseWriter, r *http.Request) {
 	var req postJSONRequest
 	var buf bytes.Buffer
 

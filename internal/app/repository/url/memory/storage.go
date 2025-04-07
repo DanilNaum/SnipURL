@@ -28,7 +28,7 @@ func (s *storage) SetURL(_ context.Context, id, url string) (int, error) {
 	defer s.mu.Unlock()
 
 	if oldURL, ok := s.urls[id]; ok && oldURL != url {
-		return -1, ErrIDIsBusy
+		return 0, ErrIDIsBusy
 	}
 
 	s.urls[id] = url
