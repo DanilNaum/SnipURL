@@ -32,17 +32,17 @@ var _ dumper = &dumperMock{}
 //	}
 type dumperMock struct {
 	// AddFunc mocks the Add method.
-	AddFunc func(record *dump.Record) error
+	AddFunc func(record *dump.URLRecord) error
 
 	// ReadAllFunc mocks the ReadAll method.
-	ReadAllFunc func() (chan dump.Record, error)
+	ReadAllFunc func() (chan dump.URLRecord, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// Add holds details about calls to the Add method.
 		Add []struct {
 			// Record is the record argument value.
-			Record *dump.Record
+			Record *dump.URLRecord
 		}
 		// ReadAll holds details about calls to the ReadAll method.
 		ReadAll []struct {
@@ -53,12 +53,12 @@ type dumperMock struct {
 }
 
 // Add calls AddFunc.
-func (mock *dumperMock) Add(record *dump.Record) error {
+func (mock *dumperMock) Add(record *dump.URLRecord) error {
 	if mock.AddFunc == nil {
 		panic("dumperMock.AddFunc: method is nil but dumper.Add was just called")
 	}
 	callInfo := struct {
-		Record *dump.Record
+		Record *dump.URLRecord
 	}{
 		Record: record,
 	}
@@ -73,10 +73,10 @@ func (mock *dumperMock) Add(record *dump.Record) error {
 //
 //	len(mockeddumper.AddCalls())
 func (mock *dumperMock) AddCalls() []struct {
-	Record *dump.Record
+	Record *dump.URLRecord
 } {
 	var calls []struct {
-		Record *dump.Record
+		Record *dump.URLRecord
 	}
 	mock.lockAdd.RLock()
 	calls = mock.calls.Add
@@ -85,7 +85,7 @@ func (mock *dumperMock) AddCalls() []struct {
 }
 
 // ReadAll calls ReadAllFunc.
-func (mock *dumperMock) ReadAll() (chan dump.Record, error) {
+func (mock *dumperMock) ReadAll() (chan dump.URLRecord, error) {
 	if mock.ReadAllFunc == nil {
 		panic("dumperMock.ReadAllFunc: method is nil but dumper.ReadAll was just called")
 	}

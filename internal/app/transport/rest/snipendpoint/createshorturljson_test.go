@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSnipEndpoint_postJson(t *testing.T) {
+func TestSnipEndpoint_createShortURLJSON(t *testing.T) {
 	type input struct {
 		body      string
 		bodyError bool
@@ -153,7 +153,7 @@ func TestSnipEndpoint_postJson(t *testing.T) {
 
 			w := httptest.NewRecorder()
 
-			endpoint.postJSON(w, req)
+			endpoint.createShortURLJSON(w, req)
 
 			require.Equal(t, tt.want.code, w.Code)
 			require.Equal(t, strings.TrimSpace(tt.want.body), strings.TrimSpace(w.Body.String()))
