@@ -31,8 +31,11 @@ func (l *snipEndpoint) createShortURLJSON(w http.ResponseWriter, r *http.Request
 	id, err := l.service.SetURL(r.Context(), originalURL)
 	switch {
 	case err == nil:
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
+
 	case errors.Is(err, urlsnipper.ErrConflict):
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusConflict)
 	default:
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -53,8 +56,6 @@ func (l *snipEndpoint) createShortURLJSON(w http.ResponseWriter, r *http.Request
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
 
 	w.Write(resp)
 }
