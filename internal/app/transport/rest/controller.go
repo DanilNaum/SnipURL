@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 	middlewares "github.com/DanilNaum/SnipURL/internal/app/transport/rest/middlwares"
 	psqlping "github.com/DanilNaum/SnipURL/internal/app/transport/rest/psqlPing"
 	"github.com/DanilNaum/SnipURL/internal/app/transport/rest/snipendpoint"
@@ -22,6 +23,7 @@ type config interface {
 type service interface {
 	GetURL(ctx context.Context, id string) (string, error)
 	SetURL(ctx context.Context, url string) (string, error)
+	SetURLs(ctx context.Context, urls []*urlsnipper.SetURLsInput) (map[string]*urlsnipper.SetURLsOutput, error)
 }
 
 type psqlStoragePinger interface {

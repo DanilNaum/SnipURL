@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
 	dump "github.com/DanilNaum/SnipURL/pkg/utils/dumper"
 )
 
@@ -18,6 +19,7 @@ const _maxAttempts = 10
 type urlStorage interface {
 	SetURL(ctx context.Context, id, url string) (length int, err error)
 	GetURL(ctx context.Context, id string) (string, error)
+	SetURLs(_ context.Context, urls []*urlstorage.URLRecord) (insertedUrls []*urlstorage.URLRecord, err error)
 }
 
 //go:generate moq -out mock_hasher_moq_test.go . hasher
@@ -68,6 +70,7 @@ func (s *urlSnipperService) SetURL(ctx context.Context, url string) (string, err
 			if err != nil {
 				s.logger.Errorf("failed to dump record: %v", err)
 			}
+
 			return id, nil
 		}
 
@@ -83,4 +86,47 @@ func (s *urlSnipperService) GetURL(ctx context.Context, id string) (string, erro
 		return "", fmt.Errorf("%w: %w", ErrFailedToGetURL, err)
 	}
 	return url, nil
+}
+
+func (s *urlSnipperService) SetURLs(ctx context.Context, urls []*SetURLsInput) (map[string]*SetURLsOutput, error) {
+	output := make(map[string]*SetURLsOutput, len(urls))
+
+	toInsert := make([]*urlstorage.URLRecord, 0, len(urls))
+
+	for _, url := range urls {
+		id := s.hasher.Hash(url.OriginalURL)
+
+		toInsert = append(toInsert, &urlstorage.URLRecord{
+			ShortURL:    id,
+			OriginalURL: url.OriginalURL,
+		})
+
+		output[url.CorrelationID] = &SetURLsOutput{
+			CorrelationID: url.CorrelationID,
+			ShortURLID:    id,
+		}
+
+	}
+
+	inserted, err := s.storage.SetURLs(ctx, toInsert)
+	if err != nil {
+		return nil, err
+	}
+	for _, record := range inserted {
+		rec := &dump.URLRecord{
+			UUID:        record.ID,
+			ShortURL:    record.ShortURL,
+			OriginalURL: record.OriginalURL,
+		}
+		err := s.dumper.Add(rec)
+		if err != nil {
+			s.logger.Errorf("failed to dump record: %v", err)
+		}
+	}
+
+	if len(inserted) != len(toInsert) {
+		return nil, ErrFailedToGenerateID
+	}
+
+	return output, nil
 }

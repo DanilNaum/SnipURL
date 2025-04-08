@@ -19,6 +19,7 @@ import (
 	"github.com/DanilNaum/SnipURL/pkg/utils/httpserver"
 	"github.com/go-chi/chi/v5"
 
+	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -57,6 +58,7 @@ func run(log *zap.SugaredLogger) error {
 		Ping(ctx context.Context) error
 		GetURL(ctx context.Context, id string) (string, error)
 		SetURL(ctx context.Context, id, url string) (int, error)
+		SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) ([]*urlstorage.URLRecord, error)
 	}
 
 	dump, err := dumper.NewDumper(conf.DumpConfig().GetPath(), log)

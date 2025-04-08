@@ -3,9 +3,10 @@ package memory
 import (
 	"context"
 	"errors"
+	"sync"
+
 	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
 	dump "github.com/DanilNaum/SnipURL/pkg/utils/dumper"
-	"sync"
 )
 
 type dumper interface {
@@ -66,4 +67,21 @@ func (s *storage) RestoreStorage(dumper dumper) error {
 		}
 	}
 	return nil
+}
+
+func (s *storage) SetURLs(_ context.Context, urls []*urlstorage.URLRecord) (insertedUrls []*urlstorage.URLRecord, err error) {
+	inserted := make([]*urlstorage.URLRecord, 0, len(urls))
+	for _, url := range urls {
+		_, err := s.SetURL(context.Background(), url.ShortURL, url.OriginalURL)
+		if err != nil {
+			if errors.Is(err, urlstorage.ErrIDIsBusy) {
+
+			} else {
+				return nil, err
+			}
+		}
+		url.ID = len(s.urls)
+		inserted = append(inserted, url)
+	}
+	return inserted, nil
 }

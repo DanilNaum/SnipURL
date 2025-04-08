@@ -3,13 +3,15 @@ package snipendpoint
 import (
 	"context"
 
+	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 	"github.com/go-chi/chi/v5"
 )
 
 const (
-	endpointGetURL             = "/{id}"
-	endpointCreateShortURL     = "/"
-	endpointCreateShortURLJSON = "/api/shorten"
+	endpointGetURL              = "/{id}"
+	endpointCreateShortURL      = "/"
+	endpointCreateShortURLJSON  = "/api/shorten"
+	endpointCreateShortURLBatch = "/api/shorten/batch"
 )
 
 type config interface {
@@ -21,6 +23,7 @@ type config interface {
 type service interface {
 	SetURL(ctx context.Context, url string) (string, error)
 	GetURL(ctx context.Context, id string) (string, error)
+	SetURLs(ctx context.Context, urls []*urlsnipper.SetURLsInput) (map[string]*urlsnipper.SetURLsOutput, error)
 }
 
 type snipEndpoint struct {
@@ -46,5 +49,6 @@ func (l *snipEndpoint) Register(r *chi.Mux) {
 		r.Post(endpointCreateShortURL, l.createShortURL)
 		r.Get(endpointGetURL, l.getURL)
 		r.Post(endpointCreateShortURLJSON, l.createShortURLJSON)
+		r.Post(endpointCreateShortURLBatch, l.createShortURLBatch)
 	})
 }

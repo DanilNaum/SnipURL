@@ -5,6 +5,7 @@ package snipendpoint
 
 import (
 	"context"
+	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 	"sync"
 )
 
@@ -24,6 +25,9 @@ var _ service = &serviceMock{}
 //			SetURLFunc: func(ctx context.Context, url string) (string, error) {
 //				panic("mock out the SetURL method")
 //			},
+//			SetURLsFunc: func(ctx context.Context, urls []*urlsnipper.SetURLsInput) (map[string]*urlsnipper.SetURLsOutput, error) {
+//				panic("mock out the SetURLs method")
+//			},
 //		}
 //
 //		// use mockedservice in code that requires service
@@ -36,6 +40,9 @@ type serviceMock struct {
 
 	// SetURLFunc mocks the SetURL method.
 	SetURLFunc func(ctx context.Context, url string) (string, error)
+
+	// SetURLsFunc mocks the SetURLs method.
+	SetURLsFunc func(ctx context.Context, urls []*urlsnipper.SetURLsInput) (map[string]*urlsnipper.SetURLsOutput, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -53,9 +60,17 @@ type serviceMock struct {
 			// URL is the url argument value.
 			URL string
 		}
+		// SetURLs holds details about calls to the SetURLs method.
+		SetURLs []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Urls is the urls argument value.
+			Urls []*urlsnipper.SetURLsInput
+		}
 	}
-	lockGetURL sync.RWMutex
-	lockSetURL sync.RWMutex
+	lockGetURL  sync.RWMutex
+	lockSetURL  sync.RWMutex
+	lockSetURLs sync.RWMutex
 }
 
 // GetURL calls GetURLFunc.
@@ -127,5 +142,41 @@ func (mock *serviceMock) SetURLCalls() []struct {
 	mock.lockSetURL.RLock()
 	calls = mock.calls.SetURL
 	mock.lockSetURL.RUnlock()
+	return calls
+}
+
+// SetURLs calls SetURLsFunc.
+func (mock *serviceMock) SetURLs(ctx context.Context, urls []*urlsnipper.SetURLsInput) (map[string]*urlsnipper.SetURLsOutput, error) {
+	if mock.SetURLsFunc == nil {
+		panic("serviceMock.SetURLsFunc: method is nil but service.SetURLs was just called")
+	}
+	callInfo := struct {
+		Ctx  context.Context
+		Urls []*urlsnipper.SetURLsInput
+	}{
+		Ctx:  ctx,
+		Urls: urls,
+	}
+	mock.lockSetURLs.Lock()
+	mock.calls.SetURLs = append(mock.calls.SetURLs, callInfo)
+	mock.lockSetURLs.Unlock()
+	return mock.SetURLsFunc(ctx, urls)
+}
+
+// SetURLsCalls gets all the calls that were made to SetURLs.
+// Check the length with:
+//
+//	len(mockedservice.SetURLsCalls())
+func (mock *serviceMock) SetURLsCalls() []struct {
+	Ctx  context.Context
+	Urls []*urlsnipper.SetURLsInput
+} {
+	var calls []struct {
+		Ctx  context.Context
+		Urls []*urlsnipper.SetURLsInput
+	}
+	mock.lockSetURLs.RLock()
+	calls = mock.calls.SetURLs
+	mock.lockSetURLs.RUnlock()
 	return calls
 }

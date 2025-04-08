@@ -3,8 +3,10 @@ package psql
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
+	"github.com/DanilNaum/SnipURL/pkg/utils/placeholder"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -64,4 +66,45 @@ func (s *storage) GetURL(_ context.Context, id string) (string, error) {
 		return "", err
 	}
 	return url, nil
+}
+
+func (s *storage) SetURLs(_ context.Context, urls []*urlstorage.URLRecord) (insertedUrls []*urlstorage.URLRecord, err error) {
+
+	placeholder := placeholder.MakeDollars(
+		placeholder.WithColumnNumAndRowNum(2, len(urls)),
+	)
+	query := fmt.Sprintf(`INSERT INTO url (id, url) VALUES %s 
+  	ON CONFLICT (id) DO NOTHING
+  	RETURNING uuid, id, url`, placeholder)
+
+	rows, err := s.conn.Master().Query(context.Background(),
+		query,
+		valuesForInsert(urls)...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	insertedUrls = make([]*urlstorage.URLRecord, 0, len(urls))
+	for rows.Next() {
+		var urlRecord urlstorage.URLRecord
+		err := rows.Scan(&urlRecord.ID, &urlRecord.ShortURL, &urlRecord.OriginalURL)
+		if err != nil {
+			return nil, err
+		}
+		insertedUrls = append(insertedUrls, &urlRecord)
+	}
+
+	return insertedUrls, nil
+}
+
+func valuesForInsert(urlRecords []*urlstorage.URLRecord) []interface{} {
+	values := make([]interface{}, 0, len(urlRecords)*2)
+
+	for _, urlRecord := range urlRecords {
+		values = append(values, urlRecord.ShortURL, urlRecord.OriginalURL)
+	}
+
+	return values
 }

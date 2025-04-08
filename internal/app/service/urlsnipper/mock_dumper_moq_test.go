@@ -18,10 +18,10 @@ var _ dumper = &dumperMock{}
 //
 //		// make and configure a mocked dumper
 //		mockeddumper := &dumperMock{
-//			AddFunc: func(record *dump.Record) error {
+//			AddFunc: func(record *dump.URLRecord) error {
 //				panic("mock out the Add method")
 //			},
-//			ReadAllFunc: func() (chan dump.Record, error) {
+//			ReadAllFunc: func() (chan dump.URLRecord, error) {
 //				panic("mock out the ReadAll method")
 //			},
 //		}
