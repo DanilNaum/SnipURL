@@ -37,18 +37,20 @@ func (s *storage) Ping(ctx context.Context) error {
 }
 
 func (s *storage) SetURL(_ context.Context, id, url string) (int, error) {
-	query := `WITH insert_attempt AS (
-    INSERT INTO url (id, url)
-    VALUES ($1, $2)
-    ON CONFLICT (url) DO NOTHING
-    RETURNING uuid, id, url, true AS inserted
+	query := `WITH insertion AS (
+	INSERT INTO url (id, url)
+	VALUES ($1, $2)
+	ON CONFLICT (url) DO NOTHING
+	RETURNING *, true AS is_inserted
+	),
+	fallback AS (
+	SELECT *, false AS is_inserted  FROM url
+	WHERE url = $2
 	)
-	SELECT *, COALESCE(inserted, false) AS inserted
-	FROM insert_attempt
+	SELECT * FROM insertion
 	UNION ALL
-	SELECT uuid, id, url, false
-	FROM url
-	WHERE url = $2 AND NOT EXISTS (SELECT 1 FROM insert_attempt)
+	SELECT * FROM fallback
+	WHERE NOT EXISTS (SELECT 1 FROM insertion)
 	LIMIT 1`
 
 	var (
@@ -62,7 +64,7 @@ func (s *storage) SetURL(_ context.Context, id, url string) (int, error) {
 		return 0, err
 	}
 
-	if inserted {
+	if !inserted {
 		return uuid, urlstorage.ErrConflict
 	}
 

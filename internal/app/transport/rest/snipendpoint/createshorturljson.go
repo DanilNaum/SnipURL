@@ -3,9 +3,12 @@ package snipendpoint
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 
 	"net/http"
 	"net/url"
+
+	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 )
 
 func (l *snipEndpoint) createShortURLJSON(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +29,12 @@ func (l *snipEndpoint) createShortURLJSON(w http.ResponseWriter, r *http.Request
 	originalURL := req.URL
 
 	id, err := l.service.SetURL(r.Context(), originalURL)
-	if err != nil {
+	switch {
+	case err == nil:
+		w.WriteHeader(http.StatusCreated)
+	case errors.Is(err, urlsnipper.ErrConflict):
+		w.WriteHeader(http.StatusConflict)
+	default:
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -47,8 +55,6 @@ func (l *snipEndpoint) createShortURLJSON(w http.ResponseWriter, r *http.Request
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-
-	w.WriteHeader(http.StatusCreated)
 
 	w.Write(resp)
 }

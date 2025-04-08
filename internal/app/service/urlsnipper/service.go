@@ -61,7 +61,7 @@ func (s *urlSnipperService) SetURL(ctx context.Context, url string) (string, err
 	for i := 0; i < _maxAttempts; i++ {
 		id := s.hasher.Hash(urlCopy)
 		length, err := s.storage.SetURL(ctx, id, url)
-		if errors.Is(err, urlstorage.ErrIDIsBusy) {
+		if errors.Is(err, urlstorage.ErrConflict) {
 			return id, ErrConflict
 		}
 		if err == nil {
