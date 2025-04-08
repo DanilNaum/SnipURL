@@ -37,19 +37,33 @@ func (s *storage) Ping(ctx context.Context) error {
 }
 
 func (s *storage) SetURL(_ context.Context, id, url string) (int, error) {
-	query := `INSERT INTO url (id, url) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING RETURNING uuid, id, url`
+	query := `WITH insert_attempt AS (
+    INSERT INTO url (id, url)
+    VALUES ($1, $2)
+    ON CONFLICT (url) DO NOTHING
+    RETURNING uuid, id, url, true AS inserted
+	)
+	SELECT *, COALESCE(inserted, false) AS inserted
+	FROM insert_attempt
+	UNION ALL
+	SELECT uuid, id, url, false
+	FROM url
+	WHERE url = $2 AND NOT EXISTS (SELECT 1 FROM insert_attempt)
+	LIMIT 1`
+
 	var (
 		idDB, urlDB string
 		uuid        int
+		inserted    bool
 	)
 
-	err := s.conn.Master().QueryRow(context.Background(), query, id, url).Scan(&uuid, &idDB, &urlDB)
+	err := s.conn.Master().QueryRow(context.Background(), query, id, url).Scan(&uuid, &idDB, &urlDB, &inserted)
 	if err != nil {
 		return 0, err
 	}
 
-	if url != urlDB {
-		return 0, urlstorage.ErrIDIsBusy
+	if inserted {
+		return uuid, urlstorage.ErrConflict
 	}
 
 	return uuid, nil

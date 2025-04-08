@@ -34,7 +34,8 @@ func (s *storage) SetURL(_ context.Context, id, url string) (int, error) {
 
 	if oldURL, ok := s.urls[id]; ok && oldURL != url {
 		return 0, urlstorage.ErrIDIsBusy
-
+	} else if ok {
+		return 0, urlstorage.ErrConflict
 	}
 
 	s.urls[id] = url

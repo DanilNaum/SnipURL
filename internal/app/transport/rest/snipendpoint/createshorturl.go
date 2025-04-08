@@ -1,9 +1,12 @@
 package snipendpoint
 
 import (
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 )
 
 func (l *snipEndpoint) createShortURL(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +20,12 @@ func (l *snipEndpoint) createShortURL(w http.ResponseWriter, r *http.Request) {
 	originalURL := string(body)
 
 	id, err := l.service.SetURL(r.Context(), originalURL)
-	if err != nil {
+	switch {
+	case err == nil:
+		w.WriteHeader(http.StatusCreated)
+	case errors.Is(err, urlsnipper.ErrConflict):
+		w.WriteHeader(http.StatusConflict)
+	default:
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -28,6 +36,5 @@ func (l *snipEndpoint) createShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(fullShortURL))
 }

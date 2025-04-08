@@ -2,6 +2,7 @@ package urlsnipper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
@@ -11,6 +12,7 @@ import (
 var (
 	ErrFailedToGenerateID = fmt.Errorf("failed to generate id")
 	ErrFailedToGetURL     = fmt.Errorf("failed to get url")
+	ErrConflict           = fmt.Errorf("conflict")
 )
 
 const _maxAttempts = 10
@@ -59,6 +61,9 @@ func (s *urlSnipperService) SetURL(ctx context.Context, url string) (string, err
 	for i := 0; i < _maxAttempts; i++ {
 		id := s.hasher.Hash(urlCopy)
 		length, err := s.storage.SetURL(ctx, id, url)
+		if errors.Is(err, urlstorage.ErrIDIsBusy) {
+			return id, ErrConflict
+		}
 		if err == nil {
 			rec := &dump.URLRecord{
 				UUID:        length,
