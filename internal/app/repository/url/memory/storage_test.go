@@ -2,9 +2,11 @@ package memory
 
 import (
 	"context"
-	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
 	"sync"
 	"testing"
+
+	"github.com/DanilNaum/SnipURL/internal/app/repository/url"
+	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
 
 	"github.com/stretchr/testify/require"
 )
@@ -53,7 +55,7 @@ func TestStorage_SetURL(t *testing.T) {
 			storageStateAfter: map[string]string{
 				"abc123": "https://example.com",
 			},
-			wantErr: nil,
+			wantErr: url.ErrConflict,
 		},
 		{
 			name: "error_id_busy",
