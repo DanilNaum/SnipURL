@@ -40,21 +40,7 @@ func (s *storage) Ping(ctx context.Context) error {
 }
 
 func (s *storage) SetURL(_ context.Context, id, url string) (int, error) {
-	// query := `WITH insertion AS (
-	// INSERT INTO url (id, url)
-	// VALUES ($1, $2)
-	// ON CONFLICT (url) DO NOTHING
-	// RETURNING *, true AS is_inserted
-	// ),
-	// fallback AS (
-	// SELECT *, false AS is_inserted  FROM url
-	// WHERE url = $2
-	// )
-	// SELECT * FROM insertion
-	// UNION ALL
-	// SELECT * FROM fallback
-	// WHERE NOT EXISTS (SELECT 1 FROM insertion)
-	// LIMIT 1`
+
 	query := `INSERT INTO url (id, url) 
 	VALUES ($1, $2)
 	RETURNING uuid`
@@ -70,15 +56,15 @@ func (s *storage) SetURL(_ context.Context, id, url string) (int, error) {
 			if pgErr.Code == pgerrcode.UniqueViolation {
 				query = `SELECT uuid FROM url WHERE url = $1`
 				err = s.conn.Master().QueryRow(context.Background(), query, url).Scan(&uuid)
+				if err != nil {
+					return 0, err
+				}
+
 				return uuid, urlstorage.ErrConflict
 			}
 		}
 		return 0, err
 	}
-
-	// if !inserted {
-	// 	return uuid, urlstorage.ErrConflict
-	// }
 
 	return uuid, nil
 }
