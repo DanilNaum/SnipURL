@@ -22,6 +22,9 @@ var _ service = &serviceMock{}
 //			GetURLFunc: func(ctx context.Context, id string) (string, error) {
 //				panic("mock out the GetURL method")
 //			},
+//			GetURLsFunc: func(ctx context.Context) ([]*urlsnipper.Url, error) {
+//				panic("mock out the GetURLs method")
+//			},
 //			SetURLFunc: func(ctx context.Context, url string) (string, error) {
 //				panic("mock out the SetURL method")
 //			},
@@ -38,6 +41,9 @@ type serviceMock struct {
 	// GetURLFunc mocks the GetURL method.
 	GetURLFunc func(ctx context.Context, id string) (string, error)
 
+	// GetURLsFunc mocks the GetURLs method.
+	GetURLsFunc func(ctx context.Context) ([]*urlsnipper.Url, error)
+
 	// SetURLFunc mocks the SetURL method.
 	SetURLFunc func(ctx context.Context, url string) (string, error)
 
@@ -52,6 +58,11 @@ type serviceMock struct {
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
+		}
+		// GetURLs holds details about calls to the GetURLs method.
+		GetURLs []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 		}
 		// SetURL holds details about calls to the SetURL method.
 		SetURL []struct {
@@ -69,6 +80,7 @@ type serviceMock struct {
 		}
 	}
 	lockGetURL  sync.RWMutex
+	lockGetURLs sync.RWMutex
 	lockSetURL  sync.RWMutex
 	lockSetURLs sync.RWMutex
 }
@@ -106,6 +118,38 @@ func (mock *serviceMock) GetURLCalls() []struct {
 	mock.lockGetURL.RLock()
 	calls = mock.calls.GetURL
 	mock.lockGetURL.RUnlock()
+	return calls
+}
+
+// GetURLs calls GetURLsFunc.
+func (mock *serviceMock) GetURLs(ctx context.Context) ([]*urlsnipper.Url, error) {
+	if mock.GetURLsFunc == nil {
+		panic("serviceMock.GetURLsFunc: method is nil but service.GetURLs was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.lockGetURLs.Lock()
+	mock.calls.GetURLs = append(mock.calls.GetURLs, callInfo)
+	mock.lockGetURLs.Unlock()
+	return mock.GetURLsFunc(ctx)
+}
+
+// GetURLsCalls gets all the calls that were made to GetURLs.
+// Check the length with:
+//
+//	len(mockedservice.GetURLsCalls())
+func (mock *serviceMock) GetURLsCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	mock.lockGetURLs.RLock()
+	calls = mock.calls.GetURLs
+	mock.lockGetURLs.RUnlock()
 	return calls
 }
 

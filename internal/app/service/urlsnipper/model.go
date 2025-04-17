@@ -9,3 +9,8 @@ type SetURLsOutput struct {
 	CorrelationID string
 	ShortURLID    string
 }
+
+type Url struct {
+	ShortURL    string
+	OriginalURL string
+}

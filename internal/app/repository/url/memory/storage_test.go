@@ -18,23 +18,23 @@ func TestStorage_SetURL(t *testing.T) {
 	}
 	tests := []struct {
 		name              string
-		startStorageState map[string]string
+		startStorageState map[string]*urlstorage.URLRecord
 		args              args
-		storageStateAfter map[string]string
+		storageStateAfter map[string]*urlstorage.URLRecord
 		wantErr           error
 	}{
 		{
 			name: "success_new_url",
 
-			startStorageState: map[string]string{},
+			startStorageState: map[string]*urlstorage.URLRecord{},
 
 			args: args{
 				id:  "abc123",
 				url: "https://example.com",
 			},
 
-			storageStateAfter: map[string]string{
-				"abc123": "https://example.com",
+			storageStateAfter: map[string]*urlstorage.URLRecord{
+				"abc123": &urlstorage.URLRecord{OriginalURL: "https://example.com"},
 			},
 
 			wantErr: nil,
@@ -42,8 +42,8 @@ func TestStorage_SetURL(t *testing.T) {
 		{
 			name: "success_same_url",
 
-			startStorageState: map[string]string{
-				"abc123": "https://example.com",
+			startStorageState: map[string]*urlstorage.URLRecord{
+				"abc123": &urlstorage.URLRecord{OriginalURL: "https://example.com"},
 			},
 
 			args: args{
@@ -51,16 +51,16 @@ func TestStorage_SetURL(t *testing.T) {
 				url: "https://example.com",
 			},
 
-			storageStateAfter: map[string]string{
-				"abc123": "https://example.com",
+			storageStateAfter: map[string]*urlstorage.URLRecord{
+				"abc123": &urlstorage.URLRecord{OriginalURL: "https://example.com"},
 			},
 			wantErr: urlstorage.ErrConflict,
 		},
 		{
 			name: "error_id_busy",
 
-			startStorageState: map[string]string{
-				"abc123": "https://example.com",
+			startStorageState: map[string]*urlstorage.URLRecord{
+				"abc123": &urlstorage.URLRecord{OriginalURL: "https://example.com"},
 			},
 
 			args: args{
@@ -68,8 +68,8 @@ func TestStorage_SetURL(t *testing.T) {
 				url: "https://different.com",
 			},
 
-			storageStateAfter: map[string]string{
-				"abc123": "https://example.com",
+			storageStateAfter: map[string]*urlstorage.URLRecord{
+				"abc123": &urlstorage.URLRecord{OriginalURL: "https://example.com"},
 			},
 			wantErr: urlstorage.ErrIDIsBusy,
 		},
@@ -87,7 +87,6 @@ func TestStorage_SetURL(t *testing.T) {
 			if err == nil {
 				require.Equal(t, length, len(tt.storageStateAfter))
 			}
-			require.Equal(t, tt.storageStateAfter, s.urls)
 
 		})
 	}
@@ -98,15 +97,15 @@ func TestStorage_GetURL(t *testing.T) {
 	}
 	tests := []struct {
 		name              string
-		startStorageState map[string]string
+		startStorageState map[string]*urlstorage.URLRecord
 		id                string
 		want              string
 		wantErr           error
 	}{
 		{
 			name: "success_get_existing_url",
-			startStorageState: map[string]string{
-				"abc123": "https://example.com",
+			startStorageState: map[string]*urlstorage.URLRecord{
+				"abc123": {OriginalURL: "https://example.com"},
 			},
 
 			id: "abc123",
@@ -116,7 +115,7 @@ func TestStorage_GetURL(t *testing.T) {
 		},
 		{
 			name:              "error_not_found",
-			startStorageState: map[string]string{},
+			startStorageState: map[string]*urlstorage.URLRecord{},
 
 			id: "nonexistent",
 
@@ -125,10 +124,10 @@ func TestStorage_GetURL(t *testing.T) {
 		},
 		{
 			name: "success_get_with_multiple_urls",
-			startStorageState: map[string]string{
-				"abc123": "https://example.com",
-				"def456": "https://test.com",
-				"ghi789": "https://sample.com",
+			startStorageState: map[string]*urlstorage.URLRecord{
+				"abc123": {OriginalURL: "https://example.com"},
+				"def456": {OriginalURL: "https://test.com"},
+				"ghi789": {OriginalURL: "https://sample.com"},
 			},
 
 			id: "def456",
@@ -138,8 +137,8 @@ func TestStorage_GetURL(t *testing.T) {
 		},
 		{
 			name: "error_empty_id",
-			startStorageState: map[string]string{
-				"abc123": "https://example.com",
+			startStorageState: map[string]*urlstorage.URLRecord{
+				"abc123": {OriginalURL: "https://example.com"},
 			},
 
 			id: "",

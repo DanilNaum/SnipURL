@@ -1,6 +1,8 @@
 package snipendpoint
 
 import (
+	"net/url"
+
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 )
 
@@ -16,4 +18,19 @@ func createShortURLBatchJSONResponseFromServiceModel(resp *urlsnipper.SetURLsOut
 		CorrelationID: resp.CorrelationID,
 		ShortURL:      resp.ShortURLID,
 	}
+}
+
+func getURLsJSONResponseFromServiceModel(baseURL string, resp []*urlsnipper.Url) ([]*getURLsJSONResponse, error) {
+	urls := make([]*getURLsJSONResponse, 0, len(resp))
+	for _, u := range resp {
+		fullShortURL, err := url.JoinPath(baseURL, u.ShortURL)
+		if err != nil {
+			return nil, err
+		}
+		urls = append(urls, &getURLsJSONResponse{
+			ShortURL:    fullShortURL,
+			OriginalURL: u.OriginalURL,
+		})
+	}
+	return urls, nil
 }

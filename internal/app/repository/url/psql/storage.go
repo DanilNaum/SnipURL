@@ -11,6 +11,11 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
+const (
+	expectedNumberOfURLs = 20
+	key                  = "userID"
+)
+
 type connection interface {
 	Master() *pgxpool.Pool
 	Close()
@@ -36,45 +41,49 @@ func (s *storage) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (s *storage) SetURL(_ context.Context, id, url string) (int, error) {
+func (s *storage) SetURL(ctx context.Context, id, url string) (int, error) {
+	userID, ok := ctx.Value(key).(string)
+	if !ok {
+		return 0, errors.New("error get userID from context")
+	}
+
 	query := `WITH insertion AS (
-	INSERT INTO url (id, url)
-	VALUES ($1, $2)
+	INSERT INTO url (id, url, user_uuid)
+	VALUES ($1, $2, $3)
 	ON CONFLICT (url) DO NOTHING
-	RETURNING *, true AS is_inserted
+	RETURNING uuid, true AS is_inserted
 	),
 	fallback AS (
-	SELECT *, false AS is_inserted  FROM url
+	SELECT uuid, false AS is_inserted  FROM url
 	WHERE url = $2
 	)
-	SELECT * FROM insertion
+	SELECT uuid, is_inserted  FROM insertion
 	UNION ALL
-	SELECT * FROM fallback
+	SELECT uuid, is_inserted FROM fallback
 	WHERE NOT EXISTS (SELECT 1 FROM insertion)
 	LIMIT 1`
 
 	var (
-		idDB, urlDB string
-		uuid        int
-		inserted    bool
+		uuid     int
+		inserted bool
 	)
 
-	err := s.conn.Master().QueryRow(context.Background(), query, id, url).Scan(&uuid, &idDB, &urlDB, &inserted)
+	err := s.conn.Master().QueryRow(ctx, query, id, url, userID).Scan(&uuid, &inserted)
 	if err != nil {
 		return 0, err
 	}
 
 	if !inserted {
-		return uuid, urlstorage.ErrConflict
+		return 0, urlstorage.ErrConflict
 	}
 
 	return uuid, nil
 }
 
-func (s *storage) GetURL(_ context.Context, id string) (string, error) {
+func (s *storage) GetURL(ctx context.Context, id string) (string, error) {
 	query := `SELECT url FROM url WHERE id = $1`
 	var url string
-	err := s.conn.Master().QueryRow(context.Background(), query, id).Scan(&url)
+	err := s.conn.Master().QueryRow(ctx, query, id).Scan(&url)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return "", urlstorage.ErrNotFound
@@ -84,18 +93,21 @@ func (s *storage) GetURL(_ context.Context, id string) (string, error) {
 	return url, nil
 }
 
-func (s *storage) SetURLs(_ context.Context, urls []*urlstorage.URLRecord) (insertedUrls []*urlstorage.URLRecord, err error) {
-
+func (s *storage) SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (insertedUrls []*urlstorage.URLRecord, err error) {
+	userID, ok := ctx.Value(key).(string)
+	if !ok {
+		return nil, errors.New("error get userID from context")
+	}
 	placeholder := placeholder.MakeDollars(
-		placeholder.WithColumnNumAndRowNum(2, len(urls)),
+		placeholder.WithColumnNumAndRowNum(3, len(urls)),
 	)
-	query := fmt.Sprintf(`INSERT INTO url (id, url) VALUES %s 
+	query := fmt.Sprintf(`INSERT INTO url (id, url, user_uuid) VALUES %s 
   	ON CONFLICT (id) DO NOTHING
   	RETURNING uuid, id, url`, placeholder)
 
-	rows, err := s.conn.Master().Query(context.Background(),
+	rows, err := s.conn.Master().Query(ctx,
 		query,
-		valuesForInsert(urls)...,
+		valuesForInsert(userID, urls)...,
 	)
 	if err != nil {
 		return nil, err
@@ -115,11 +127,34 @@ func (s *storage) SetURLs(_ context.Context, urls []*urlstorage.URLRecord) (inse
 	return insertedUrls, nil
 }
 
-func valuesForInsert(urlRecords []*urlstorage.URLRecord) []interface{} {
-	values := make([]interface{}, 0, len(urlRecords)*2)
+func (s *storage) GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error) {
+	userID, ok := ctx.Value(key).(string)
+	if !ok {
+		return nil, errors.New("error get userID from context")
+	}
+	query := `SELECT id, url FROM url WHERE user_uuid = $1`
+	rows, err := s.conn.Master().Query(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	urls := make([]*urlstorage.URLRecord, 0, expectedNumberOfURLs)
+	for rows.Next() {
+		var urlRecord urlstorage.URLRecord
+		err := rows.Scan(&urlRecord.ID, &urlRecord.OriginalURL)
+		if err != nil {
+			return nil, err
+		}
+		urls = append(urls, &urlRecord)
+	}
+	return urls, nil
+}
+
+func valuesForInsert(userID string, urlRecords []*urlstorage.URLRecord) []interface{} {
+	values := make([]interface{}, 0, len(urlRecords)*3)
 
 	for _, urlRecord := range urlRecords {
-		values = append(values, urlRecord.ShortURL, urlRecord.OriginalURL)
+		values = append(values, urlRecord.ShortURL, urlRecord.OriginalURL, userID)
 	}
 
 	return values

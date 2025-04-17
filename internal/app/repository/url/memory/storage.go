@@ -9,36 +9,49 @@ import (
 	dump "github.com/DanilNaum/SnipURL/pkg/utils/dumper"
 )
 
+const (
+	key                  = "userID"
+	expectedNumberOfURLs = 20
+)
+
 type dumper interface {
 	ReadAll() (chan dump.URLRecord, error)
 }
 
 type storage struct {
 	mu   sync.RWMutex
-	urls map[string]string
+	urls map[string]*urlstorage.URLRecord
 }
 
 func NewStorage() *storage {
 	return &storage{
 		mu:   sync.RWMutex{},
-		urls: make(map[string]string),
+		urls: make(map[string]*urlstorage.URLRecord),
 	}
 }
 
 func (s *storage) Ping(ctx context.Context) error {
 	return errors.New("not implemented")
 }
-func (s *storage) SetURL(_ context.Context, id, url string) (int, error) {
+func (s *storage) SetURL(ctx context.Context, id, url string) (int, error) {
+	userID, ok := ctx.Value(key).(string)
+	if !ok {
+		userID = ""
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if oldURL, ok := s.urls[id]; ok && oldURL != url {
+	if oldURL, ok := s.urls[id]; ok && oldURL.OriginalURL != url {
 		return 0, urlstorage.ErrIDIsBusy
 	} else if ok {
 		return 0, urlstorage.ErrConflict
 	}
 
-	s.urls[id] = url
+	s.urls[id] = &urlstorage.URLRecord{
+		ShortURL:    id,
+		OriginalURL: url,
+		UserID:      userID,
+	}
 	return len(s.urls), nil
 }
 
@@ -51,7 +64,7 @@ func (s *storage) GetURL(_ context.Context, id string) (string, error) {
 		return "", urlstorage.ErrNotFound
 	}
 
-	return url, nil
+	return url.OriginalURL, nil
 
 }
 
@@ -70,10 +83,10 @@ func (s *storage) RestoreStorage(dumper dumper) error {
 	return nil
 }
 
-func (s *storage) SetURLs(_ context.Context, urls []*urlstorage.URLRecord) (insertedUrls []*urlstorage.URLRecord, err error) {
+func (s *storage) SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (insertedUrls []*urlstorage.URLRecord, err error) {
 	inserted := make([]*urlstorage.URLRecord, 0, len(urls))
 	for _, url := range urls {
-		_, err := s.SetURL(context.Background(), url.ShortURL, url.OriginalURL)
+		_, err := s.SetURL(ctx, url.ShortURL, url.OriginalURL)
 		if err != nil {
 			if errors.Is(err, urlstorage.ErrIDIsBusy) {
 
@@ -85,4 +98,20 @@ func (s *storage) SetURLs(_ context.Context, urls []*urlstorage.URLRecord) (inse
 		inserted = append(inserted, url)
 	}
 	return inserted, nil
+}
+
+func (s *storage) GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error) {
+	userID, ok := ctx.Value(key).(string)
+	if !ok {
+		return nil, errors.New("userID not found in context")
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	urls := make([]*urlstorage.URLRecord, 0, expectedNumberOfURLs)
+	for _, url := range s.urls {
+		if url.UserID == userID {
+			urls = append(urls, url)
+		}
+	}
+	return urls, nil
 }

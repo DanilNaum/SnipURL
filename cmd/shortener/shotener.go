@@ -12,6 +12,7 @@ import (
 	"github.com/DanilNaum/SnipURL/internal/app/repository/url/psql"
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 	rest "github.com/DanilNaum/SnipURL/internal/app/transport/rest"
+	"github.com/DanilNaum/SnipURL/pkg/cookie"
 	"github.com/DanilNaum/SnipURL/pkg/migration"
 	"github.com/DanilNaum/SnipURL/pkg/pg"
 	"github.com/DanilNaum/SnipURL/pkg/utils/dumper"
@@ -59,6 +60,7 @@ func run(log *zap.SugaredLogger) error {
 		GetURL(ctx context.Context, id string) (string, error)
 		SetURL(ctx context.Context, id, url string) (int, error)
 		SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) ([]*urlstorage.URLRecord, error)
+		GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error)
 	}
 
 	dump, err := dumper.NewDumper(conf.DumpConfig().GetPath(), log)
@@ -69,7 +71,7 @@ func run(log *zap.SugaredLogger) error {
 	var urlStorage storage
 
 	if conf.DBConfig().GetDSN() != "" {
-		migrator := migration.NewMigrator(conf.DBConfig().GetDSN(), migration.WithRelativePath("migrations"))
+		migrator := migration.NewMigrator(conf.DBConfig().GetDSN(), migration.WithRelativePath("../../migrations"))
 		err := migrator.Migrate()
 		if err != nil {
 			return err
@@ -102,7 +104,9 @@ func run(log *zap.SugaredLogger) error {
 
 	mux := chi.NewRouter()
 
-	controller, err := rest.NewController(mux, conf.ServerConfig(), urlSnipperService, urlStorage, log)
+	cookieManager := cookie.NewCookieManager([]byte(conf.CookieConfig().GetSecret()), cookie.WithName("user"))
+
+	controller, err := rest.NewController(mux, conf.ServerConfig(), urlSnipperService, urlStorage, cookieManager, log)
 
 	if err != nil {
 		return err

@@ -21,7 +21,8 @@ const _maxAttempts = 10
 type urlStorage interface {
 	SetURL(ctx context.Context, id, url string) (length int, err error)
 	GetURL(ctx context.Context, id string) (string, error)
-	SetURLs(_ context.Context, urls []*urlstorage.URLRecord) (insertedUrls []*urlstorage.URLRecord, err error)
+	SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (insertedUrls []*urlstorage.URLRecord, err error)
+	GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error)
 }
 
 //go:generate moq -out mock_hasher_moq_test.go . hasher
@@ -134,4 +135,20 @@ func (s *urlSnipperService) SetURLs(ctx context.Context, urls []*SetURLsInput) (
 	}
 
 	return output, nil
+}
+
+func (s *urlSnipperService) GetURLs(ctx context.Context) ([]*Url, error) {
+	urls, err := s.storage.GetURLs(ctx)
+	if err != nil {
+		return nil, err
+	}
+	output := make([]*Url, 0, len(urls))
+	for _, url := range urls {
+		output = append(output, &Url{
+			ShortURL:    url.ShortURL,
+			OriginalURL: url.OriginalURL,
+		})
+	}
+	return output, nil
+
 }
