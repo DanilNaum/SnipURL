@@ -7,13 +7,11 @@ import (
 
 	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
 	"github.com/DanilNaum/SnipURL/pkg/utils/placeholder"
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-)
 
-const (
-	expectedNumberOfURLs = 20
-	key                  = "userID"
+	"github.com/jackc/pgerrcode"
 )
 
 type connection interface {
@@ -41,40 +39,31 @@ func (s *storage) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (s *storage) SetURL(ctx context.Context, id, url string) (int, error) {
-	userID, ok := ctx.Value(key).(string)
-	if !ok {
-		return 0, errors.New("error get userID from context")
-	}
+func (s *storage) SetURL(_ context.Context, id, url string) (int, error) {
 
-	query := `WITH insertion AS (
-	INSERT INTO url (id, url, user_uuid)
-	VALUES ($1, $2, $3)
-	ON CONFLICT (url) DO NOTHING
-	RETURNING uuid, true AS is_inserted
-	),
-	fallback AS (
-	SELECT uuid, false AS is_inserted  FROM url
-	WHERE url = $2
-	)
-	SELECT uuid, is_inserted  FROM insertion
-	UNION ALL
-	SELECT uuid, is_inserted FROM fallback
-	WHERE NOT EXISTS (SELECT 1 FROM insertion)
-	LIMIT 1`
+	query := `INSERT INTO url (id, url) 
+	VALUES ($1, $2)
+	RETURNING uuid`
 
-	var (
-		uuid     int
-		inserted bool
-	)
+	var uuid int
 
-	err := s.conn.Master().QueryRow(ctx, query, id, url, userID).Scan(&uuid, &inserted)
+	err := s.conn.Master().QueryRow(context.Background(), query, id, url).Scan(&uuid)
+
 	if err != nil {
-		return 0, err
-	}
+		var pgErr *pgconn.PgError
 
-	if !inserted {
-		return 0, urlstorage.ErrConflict
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == pgerrcode.UniqueViolation {
+				query = `SELECT uuid FROM url WHERE url = $1`
+				err = s.conn.Master().QueryRow(context.Background(), query, url).Scan(&uuid)
+				if err != nil {
+					return 0, err
+				}
+
+				return uuid, urlstorage.ErrConflict
+			}
+		}
+		return 0, err
 	}
 
 	return uuid, nil
