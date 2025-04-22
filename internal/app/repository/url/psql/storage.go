@@ -14,6 +14,11 @@ import (
 	"github.com/jackc/pgerrcode"
 )
 
+const (
+	expectedNumberOfURLs = 20
+	key                  = "userID"
+)
+
 type connection interface {
 	Master() *pgxpool.Pool
 	Close()
@@ -39,15 +44,18 @@ func (s *storage) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (s *storage) SetURL(_ context.Context, id, url string) (int, error) {
-
-	query := `INSERT INTO url (id, url) 
-	VALUES ($1, $2)
+func (s *storage) SetURL(ctx context.Context, id, url string) (int, error) {
+	userID, ok := ctx.Value(key).(string)
+	if !ok {
+		userID = ""
+	}
+	query := `INSERT INTO url (id, url, user_uuid) 
+	VALUES ($1, $2, $3)
 	RETURNING uuid`
 
 	var uuid int
 
-	err := s.conn.Master().QueryRow(context.Background(), query, id, url).Scan(&uuid)
+	err := s.conn.Master().QueryRow(context.Background(), query, id, url, userID).Scan(&uuid)
 
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -130,7 +138,7 @@ func (s *storage) GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error) 
 	urls := make([]*urlstorage.URLRecord, 0, expectedNumberOfURLs)
 	for rows.Next() {
 		var urlRecord urlstorage.URLRecord
-		err := rows.Scan(&urlRecord.ID, &urlRecord.OriginalURL)
+		err := rows.Scan(&urlRecord.ShortURL, &urlRecord.OriginalURL)
 		if err != nil {
 			return nil, err
 		}

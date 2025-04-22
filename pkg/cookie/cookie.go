@@ -3,6 +3,7 @@ package cookie
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"net/http"
 	"strings"
@@ -67,10 +68,14 @@ func NewCookieManager(secret []byte, opts ...opt) *cookieManager {
 	}
 }
 func (c *cookieManager) Set(w http.ResponseWriter, value string) {
+
+	// Create signature for the encoded value
 	signature := c.createSignature([]byte(value))
+	// Encode the signature to base64 URL-safe
+	encodedSignature := base64.RawURLEncoding.EncodeToString(signature)
 	cookie := &http.Cookie{
 		Name:     c.options.name,
-		Value:    append([]byte(value), signature),
+		Value:    value + "." + encodedSignature,
 		Path:     c.options.path,
 		Secure:   c.options.secure,
 		HttpOnly: c.options.httpOnly,
@@ -93,7 +98,12 @@ func (c *cookieManager) Get(r *http.Request) (string, error) {
 	if len(v) != 2 {
 		return "", errors.New("invalid cookie")
 	}
-	if !c.verifySignature([]byte(v[0]), []byte(v[1])) {
+	signature, err := base64.RawURLEncoding.DecodeString(v[1])
+	if err != nil {
+		return "", err
+	}
+
+	if !c.verifySignature([]byte(v[0]), signature) {
 		return "", errors.New("invalid signature")
 	}
 

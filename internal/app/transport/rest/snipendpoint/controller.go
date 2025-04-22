@@ -12,6 +12,7 @@ const (
 	endpointCreateShortURL      = "/"
 	endpointCreateShortURLJSON  = "/api/shorten"
 	endpointCreateShortURLBatch = "/api/shorten/batch"
+	endpointGetUserURLs         = "/api/user/urls"
 )
 
 type config interface {
@@ -51,5 +52,6 @@ func (l *snipEndpoint) Register(r *chi.Mux) {
 		r.Get(endpointGetURL, l.getURL)
 		r.Post(endpointCreateShortURLJSON, l.createShortURLJSON)
 		r.Post(endpointCreateShortURLBatch, l.createShortURLBatch)
+		r.Get(endpointGetUserURLs, l.getURLs)
 	})
 }
