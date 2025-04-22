@@ -6,7 +6,7 @@ import (
 )
 
 func (l *snipEndpoint) getURLs(w http.ResponseWriter, r *http.Request) {
-
+	w.Header().Set("Content-Type", "application/json")
 	urls, err := l.service.GetURLs(r.Context())
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

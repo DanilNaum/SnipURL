@@ -111,8 +111,8 @@ func (c *cookieManager) Get(r *http.Request) (string, error) {
 
 }
 
-func (с *cookieManager) createSignature(data []byte) []byte {
-	mac := hmac.New(sha256.New, с.secret)
+func (c *cookieManager) createSignature(data []byte) []byte {
+	mac := hmac.New(sha256.New, c.secret)
 	mac.Write(data)
 	return mac.Sum(nil)
 }
