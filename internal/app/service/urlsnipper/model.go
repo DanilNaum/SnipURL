@@ -10,7 +10,7 @@ type SetURLsOutput struct {
 	ShortURLID    string
 }
 
-type Url struct {
+type URL struct {
 	ShortURL    string
 	OriginalURL string
 }

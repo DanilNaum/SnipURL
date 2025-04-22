@@ -22,7 +22,7 @@ var _ service = &serviceMock{}
 //			GetURLFunc: func(ctx context.Context, id string) (string, error) {
 //				panic("mock out the GetURL method")
 //			},
-//			GetURLsFunc: func(ctx context.Context) ([]*urlsnipper.Url, error) {
+//			GetURLsFunc: func(ctx context.Context) ([]*urlsnipper.URL, error) {
 //				panic("mock out the GetURLs method")
 //			},
 //			SetURLFunc: func(ctx context.Context, url string) (string, error) {
@@ -42,7 +42,7 @@ type serviceMock struct {
 	GetURLFunc func(ctx context.Context, id string) (string, error)
 
 	// GetURLsFunc mocks the GetURLs method.
-	GetURLsFunc func(ctx context.Context) ([]*urlsnipper.Url, error)
+	GetURLsFunc func(ctx context.Context) ([]*urlsnipper.URL, error)
 
 	// SetURLFunc mocks the SetURL method.
 	SetURLFunc func(ctx context.Context, url string) (string, error)
@@ -122,7 +122,7 @@ func (mock *serviceMock) GetURLCalls() []struct {
 }
 
 // GetURLs calls GetURLsFunc.
-func (mock *serviceMock) GetURLs(ctx context.Context) ([]*urlsnipper.Url, error) {
+func (mock *serviceMock) GetURLs(ctx context.Context) ([]*urlsnipper.URL, error) {
 	if mock.GetURLsFunc == nil {
 		panic("serviceMock.GetURLsFunc: method is nil but service.GetURLs was just called")
 	}

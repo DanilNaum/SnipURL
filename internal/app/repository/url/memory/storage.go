@@ -83,7 +83,7 @@ func (s *storage) RestoreStorage(dumper dumper) error {
 	return nil
 }
 
-func (s *storage) SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (insertedUrls []*urlstorage.URLRecord, err error) {
+func (s *storage) SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (insertedURLs []*urlstorage.URLRecord, err error) {
 	inserted := make([]*urlstorage.URLRecord, 0, len(urls))
 	for _, url := range urls {
 		_, err := s.SetURL(ctx, url.ShortURL, url.OriginalURL)

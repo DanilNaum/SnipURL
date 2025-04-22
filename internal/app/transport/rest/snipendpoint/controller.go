@@ -25,7 +25,7 @@ type service interface {
 	SetURL(ctx context.Context, url string) (string, error)
 	GetURL(ctx context.Context, id string) (string, error)
 	SetURLs(ctx context.Context, urls []*urlsnipper.SetURLsInput) (map[string]*urlsnipper.SetURLsOutput, error)
-	GetURLs(ctx context.Context) ([]*urlsnipper.Url, error)
+	GetURLs(ctx context.Context) ([]*urlsnipper.URL, error)
 }
 
 type snipEndpoint struct {

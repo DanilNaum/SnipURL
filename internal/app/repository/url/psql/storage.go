@@ -90,7 +90,7 @@ func (s *storage) GetURL(ctx context.Context, id string) (string, error) {
 	return url, nil
 }
 
-func (s *storage) SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (insertedUrls []*urlstorage.URLRecord, err error) {
+func (s *storage) SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (insertedURLs []*urlstorage.URLRecord, err error) {
 	userID, ok := ctx.Value(key).(string)
 	if !ok {
 		return nil, errors.New("error get userID from context")
@@ -111,17 +111,17 @@ func (s *storage) SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (in
 	}
 	defer rows.Close()
 
-	insertedUrls = make([]*urlstorage.URLRecord, 0, len(urls))
+	insertedURLs = make([]*urlstorage.URLRecord, 0, len(urls))
 	for rows.Next() {
 		var urlRecord urlstorage.URLRecord
 		err := rows.Scan(&urlRecord.ID, &urlRecord.ShortURL, &urlRecord.OriginalURL)
 		if err != nil {
 			return nil, err
 		}
-		insertedUrls = append(insertedUrls, &urlRecord)
+		insertedURLs = append(insertedURLs, &urlRecord)
 	}
 
-	return insertedUrls, nil
+	return insertedURLs, nil
 }
 
 func (s *storage) GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error) {

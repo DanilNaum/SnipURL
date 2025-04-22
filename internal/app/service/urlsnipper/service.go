@@ -21,7 +21,7 @@ const _maxAttempts = 10
 type urlStorage interface {
 	SetURL(ctx context.Context, id, url string) (length int, err error)
 	GetURL(ctx context.Context, id string) (string, error)
-	SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (insertedUrls []*urlstorage.URLRecord, err error)
+	SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (insertedURLs []*urlstorage.URLRecord, err error)
 	GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error)
 }
 
@@ -137,14 +137,14 @@ func (s *urlSnipperService) SetURLs(ctx context.Context, urls []*SetURLsInput) (
 	return output, nil
 }
 
-func (s *urlSnipperService) GetURLs(ctx context.Context) ([]*Url, error) {
+func (s *urlSnipperService) GetURLs(ctx context.Context) ([]*URL, error) {
 	urls, err := s.storage.GetURLs(ctx)
 	if err != nil {
 		return nil, err
 	}
-	output := make([]*Url, 0, len(urls))
+	output := make([]*URL, 0, len(urls))
 	for _, url := range urls {
-		output = append(output, &Url{
+		output = append(output, &URL{
 			ShortURL:    url.ShortURL,
 			OriginalURL: url.OriginalURL,
 		})

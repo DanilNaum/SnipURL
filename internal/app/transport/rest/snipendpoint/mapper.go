@@ -20,7 +20,7 @@ func createShortURLBatchJSONResponseFromServiceModel(resp *urlsnipper.SetURLsOut
 	}
 }
 
-func getURLsJSONResponseFromServiceModel(baseURL string, resp []*urlsnipper.Url) ([]*getURLsJSONResponse, error) {
+func getURLsJSONResponseFromServiceModel(baseURL string, resp []*urlsnipper.URL) ([]*getURLsJSONResponse, error) {
 	urls := make([]*getURLsJSONResponse, 0, len(resp))
 	for _, u := range resp {
 		fullShortURL, err := url.JoinPath(baseURL, u.ShortURL)
