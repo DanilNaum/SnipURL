@@ -6,13 +6,15 @@ import (
 	"sync"
 
 	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
+	"github.com/DanilNaum/SnipURL/internal/app/transport/rest/middlewares"
 	dump "github.com/DanilNaum/SnipURL/pkg/utils/dumper"
 )
 
 const (
-	key                  = "userID"
 	expectedNumberOfURLs = 20
 )
+
+var key = middlewares.Key{Key: "userID"}
 
 type dumper interface {
 	ReadAll() (chan dump.URLRecord, error)

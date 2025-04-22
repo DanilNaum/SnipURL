@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
+	"github.com/DanilNaum/SnipURL/internal/app/transport/rest/middlewares"
 	"github.com/DanilNaum/SnipURL/pkg/utils/placeholder"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
@@ -16,8 +17,9 @@ import (
 
 const (
 	expectedNumberOfURLs = 20
-	key                  = "userID"
 )
+
+var key = middlewares.Key{Key: "userID"}
 
 type connection interface {
 	Master() *pgxpool.Pool

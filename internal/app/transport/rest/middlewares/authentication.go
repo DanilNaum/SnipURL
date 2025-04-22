@@ -9,7 +9,11 @@ import (
 	"github.com/google/uuid"
 )
 
-const key = "userID"
+type Key struct {
+	Key string
+}
+
+var key = Key{Key: "userID"}
 
 func (m *middleware) authentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

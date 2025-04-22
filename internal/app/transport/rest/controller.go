@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
-	middlewares "github.com/DanilNaum/SnipURL/internal/app/transport/rest/middlwares"
+	middlewares "github.com/DanilNaum/SnipURL/internal/app/transport/rest/middlewares"
 	psqlping "github.com/DanilNaum/SnipURL/internal/app/transport/rest/psqlPing"
 	"github.com/DanilNaum/SnipURL/internal/app/transport/rest/snipendpoint"
 	"github.com/go-chi/chi/v5"

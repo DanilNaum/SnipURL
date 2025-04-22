@@ -71,7 +71,7 @@ func run(log *zap.SugaredLogger) error {
 	var urlStorage storage
 
 	if conf.DBConfig().GetDSN() != "" {
-		migrator := migration.NewMigrator(conf.DBConfig().GetDSN(), migration.WithRelativePath("migrations"))
+		migrator := migration.NewMigrator(conf.DBConfig().GetDSN(), migration.WithRelativePath("../../migrations"))
 		err := migrator.Migrate()
 		if err != nil {
 			return err
