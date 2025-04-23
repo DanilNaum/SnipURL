@@ -55,8 +55,8 @@ func NewCookieManager(secret []byte, opts ...opt) *cookieManager {
 	opt := &options{
 		name:     "user",
 		path:     "/",
-		secure:   true,
-		httpOnly: true,
+		secure:   false,
+		httpOnly: false,
 		sameSite: http.SameSiteLaxMode,
 	}
 	for _, o := range opts {
