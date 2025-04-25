@@ -91,11 +91,14 @@ func (s *urlSnipperService) SetURL(ctx context.Context, url string) (string, err
 func (s *urlSnipperService) GetURL(ctx context.Context, id string) (string, error) {
 	url, err := s.storage.GetURL(ctx, id)
 	if err != nil {
-		if errors.Is(err, urlstorage.ErrDeleted) {
+		switch {
+		case errors.Is(err, urlstorage.ErrDeleted):
 			return "", ErrDeleted
+		default:
+			return "", fmt.Errorf("%w: %w", ErrFailedToGetURL, err)
 		}
-		return "", fmt.Errorf("%w: %w", ErrFailedToGetURL, err)
 	}
+
 	return url, nil
 }
 
