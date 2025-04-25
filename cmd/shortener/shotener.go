@@ -21,7 +21,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
-	deleteurl "github.com/DanilNaum/SnipURL/internal/app/service/deleteurl"
+	"github.com/DanilNaum/SnipURL/internal/app/service/deleteurl"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
