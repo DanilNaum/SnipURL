@@ -158,3 +158,16 @@ func valuesForInsert(userID string, urlRecords []*urlstorage.URLRecord) []interf
 
 	return values
 }
+
+func (s *storage) DeleteURLs(ctx context.Context, ids []string) error {
+	userID, ok := ctx.Value(key).(string)
+	if !ok {
+		return errors.New("error get userID from context")
+	}
+	query := `UPDATE url SET deleted = true WHERE id = ANY($1) AND user_uuid = $2`
+	_, err := s.conn.Master().Exec(ctx, query, ids, userID)
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -13,6 +13,7 @@ const (
 	endpointCreateShortURLJSON  = "/api/shorten"
 	endpointCreateShortURLBatch = "/api/shorten/batch"
 	endpointGetUserURLs         = "/api/user/urls"
+	endpointDeleteURLs          = "/api/user/urls"
 )
 
 type config interface {
@@ -26,6 +27,7 @@ type service interface {
 	GetURL(ctx context.Context, id string) (string, error)
 	SetURLs(ctx context.Context, urls []*urlsnipper.SetURLsInput) (map[string]*urlsnipper.SetURLsOutput, error)
 	GetURLs(ctx context.Context) ([]*urlsnipper.URL, error)
+	DeleteURLs(ctx context.Context, ids []string)
 }
 
 type snipEndpoint struct {
@@ -53,5 +55,7 @@ func (l *snipEndpoint) Register(r *chi.Mux) {
 		r.Post(endpointCreateShortURLJSON, l.createShortURLJSON)
 		r.Post(endpointCreateShortURLBatch, l.createShortURLBatch)
 		r.Get(endpointGetUserURLs, l.getURLs)
+		r.Delete(endpointDeleteURLs, l.deleteURLs)
+
 	})
 }

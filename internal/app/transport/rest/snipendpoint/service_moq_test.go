@@ -19,6 +19,9 @@ var _ service = &serviceMock{}
 //
 //		// make and configure a mocked service
 //		mockedservice := &serviceMock{
+//			DeleteURLsFunc: func(ctx context.Context, ids []string)  {
+//				panic("mock out the DeleteURLs method")
+//			},
 //			GetURLFunc: func(ctx context.Context, id string) (string, error) {
 //				panic("mock out the GetURL method")
 //			},
@@ -38,6 +41,9 @@ var _ service = &serviceMock{}
 //
 //	}
 type serviceMock struct {
+	// DeleteURLsFunc mocks the DeleteURLs method.
+	DeleteURLsFunc func(ctx context.Context, ids []string)
+
 	// GetURLFunc mocks the GetURL method.
 	GetURLFunc func(ctx context.Context, id string) (string, error)
 
@@ -52,6 +58,13 @@ type serviceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// DeleteURLs holds details about calls to the DeleteURLs method.
+		DeleteURLs []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Ids is the ids argument value.
+			Ids []string
+		}
 		// GetURL holds details about calls to the GetURL method.
 		GetURL []struct {
 			// Ctx is the ctx argument value.
@@ -79,10 +92,47 @@ type serviceMock struct {
 			Urls []*urlsnipper.SetURLsInput
 		}
 	}
-	lockGetURL  sync.RWMutex
-	lockGetURLs sync.RWMutex
-	lockSetURL  sync.RWMutex
-	lockSetURLs sync.RWMutex
+	lockDeleteURLs sync.RWMutex
+	lockGetURL     sync.RWMutex
+	lockGetURLs    sync.RWMutex
+	lockSetURL     sync.RWMutex
+	lockSetURLs    sync.RWMutex
+}
+
+// DeleteURLs calls DeleteURLsFunc.
+func (mock *serviceMock) DeleteURLs(ctx context.Context, ids []string) {
+	if mock.DeleteURLsFunc == nil {
+		panic("serviceMock.DeleteURLsFunc: method is nil but service.DeleteURLs was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Ids []string
+	}{
+		Ctx: ctx,
+		Ids: ids,
+	}
+	mock.lockDeleteURLs.Lock()
+	mock.calls.DeleteURLs = append(mock.calls.DeleteURLs, callInfo)
+	mock.lockDeleteURLs.Unlock()
+	mock.DeleteURLsFunc(ctx, ids)
+}
+
+// DeleteURLsCalls gets all the calls that were made to DeleteURLs.
+// Check the length with:
+//
+//	len(mockedservice.DeleteURLsCalls())
+func (mock *serviceMock) DeleteURLsCalls() []struct {
+	Ctx context.Context
+	Ids []string
+} {
+	var calls []struct {
+		Ctx context.Context
+		Ids []string
+	}
+	mock.lockDeleteURLs.RLock()
+	calls = mock.calls.DeleteURLs
+	mock.lockDeleteURLs.RUnlock()
+	return calls
 }
 
 // GetURL calls GetURLFunc.

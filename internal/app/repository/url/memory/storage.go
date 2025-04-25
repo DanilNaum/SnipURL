@@ -53,6 +53,7 @@ func (s *storage) SetURL(ctx context.Context, id, url string) (int, error) {
 		ShortURL:    id,
 		OriginalURL: url,
 		UserID:      userID,
+		Deleted:     false,
 	}
 	return len(s.urls), nil
 }
@@ -116,4 +117,26 @@ func (s *storage) GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error) 
 		}
 	}
 	return urls, nil
+}
+
+func (s *storage) DeleteURLs(ctx context.Context, ids []string) error {
+	userID, ok := ctx.Value(key).(string)
+	if !ok {
+		return errors.New("userID not found in context")
+	}
+	for _, id := range ids {
+		s.mu.Lock()
+		url, ok := s.urls[id]
+		s.mu.Unlock()
+		if !ok {
+			continue
+		}
+		if url.UserID != userID {
+			continue
+		}
+		s.mu.Lock()
+		url.Deleted = true
+		s.mu.Unlock()
+	}
+	return nil
 }

@@ -25,6 +25,7 @@ type service interface {
 	SetURL(ctx context.Context, url string) (string, error)
 	SetURLs(ctx context.Context, urls []*urlsnipper.SetURLsInput) (map[string]*urlsnipper.SetURLsOutput, error)
 	GetURLs(ctx context.Context) ([]*urlsnipper.URL, error)
+	DeleteURLs(ctx context.Context, ids []string)
 }
 
 type psqlStoragePinger interface {

@@ -61,6 +61,7 @@ func run(log *zap.SugaredLogger) error {
 		SetURL(ctx context.Context, id, url string) (int, error)
 		SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) ([]*urlstorage.URLRecord, error)
 		GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error)
+		DeleteURLs(ctx context.Context, ids []string) error
 	}
 
 	dump, err := dumper.NewDumper(conf.DumpConfig().GetPath(), log)

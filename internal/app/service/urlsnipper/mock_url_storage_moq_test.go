@@ -19,6 +19,9 @@ var _ urlStorage = &urlStorageMock{}
 //
 //		// make and configure a mocked urlStorage
 //		mockedurlStorage := &urlStorageMock{
+//			DeleteURLsFunc: func(ctx context.Context, ids []string) error {
+//				panic("mock out the DeleteURLs method")
+//			},
 //			GetURLFunc: func(ctx context.Context, id string) (string, error) {
 //				panic("mock out the GetURL method")
 //			},
@@ -38,6 +41,9 @@ var _ urlStorage = &urlStorageMock{}
 //
 //	}
 type urlStorageMock struct {
+	// DeleteURLsFunc mocks the DeleteURLs method.
+	DeleteURLsFunc func(ctx context.Context, ids []string) error
+
 	// GetURLFunc mocks the GetURL method.
 	GetURLFunc func(ctx context.Context, id string) (string, error)
 
@@ -52,6 +58,13 @@ type urlStorageMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// DeleteURLs holds details about calls to the DeleteURLs method.
+		DeleteURLs []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Ids is the ids argument value.
+			Ids []string
+		}
 		// GetURL holds details about calls to the GetURL method.
 		GetURL []struct {
 			// Ctx is the ctx argument value.
@@ -81,10 +94,47 @@ type urlStorageMock struct {
 			Urls []*urlstorage.URLRecord
 		}
 	}
-	lockGetURL  sync.RWMutex
-	lockGetURLs sync.RWMutex
-	lockSetURL  sync.RWMutex
-	lockSetURLs sync.RWMutex
+	lockDeleteURLs sync.RWMutex
+	lockGetURL     sync.RWMutex
+	lockGetURLs    sync.RWMutex
+	lockSetURL     sync.RWMutex
+	lockSetURLs    sync.RWMutex
+}
+
+// DeleteURLs calls DeleteURLsFunc.
+func (mock *urlStorageMock) DeleteURLs(ctx context.Context, ids []string) error {
+	if mock.DeleteURLsFunc == nil {
+		panic("urlStorageMock.DeleteURLsFunc: method is nil but urlStorage.DeleteURLs was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Ids []string
+	}{
+		Ctx: ctx,
+		Ids: ids,
+	}
+	mock.lockDeleteURLs.Lock()
+	mock.calls.DeleteURLs = append(mock.calls.DeleteURLs, callInfo)
+	mock.lockDeleteURLs.Unlock()
+	return mock.DeleteURLsFunc(ctx, ids)
+}
+
+// DeleteURLsCalls gets all the calls that were made to DeleteURLs.
+// Check the length with:
+//
+//	len(mockedurlStorage.DeleteURLsCalls())
+func (mock *urlStorageMock) DeleteURLsCalls() []struct {
+	Ctx context.Context
+	Ids []string
+} {
+	var calls []struct {
+		Ctx context.Context
+		Ids []string
+	}
+	mock.lockDeleteURLs.RLock()
+	calls = mock.calls.DeleteURLs
+	mock.lockDeleteURLs.RUnlock()
+	return calls
 }
 
 // GetURL calls GetURLFunc.

@@ -5,4 +5,5 @@ type URLRecord struct {
 	ShortURL    string
 	OriginalURL string
 	UserID      string
+	Deleted     bool
 }

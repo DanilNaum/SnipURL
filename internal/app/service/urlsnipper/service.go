@@ -23,6 +23,7 @@ type urlStorage interface {
 	GetURL(ctx context.Context, id string) (string, error)
 	SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (insertedURLs []*urlstorage.URLRecord, err error)
 	GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error)
+	DeleteURLs(ctx context.Context, ids []string) error
 }
 
 //go:generate moq -out mock_hasher_moq_test.go . hasher
@@ -150,5 +151,50 @@ func (s *urlSnipperService) GetURLs(ctx context.Context) ([]*URL, error) {
 		})
 	}
 	return output, nil
+
+}
+
+// This const allows to configure delete worker number and batch size
+const (
+	workerNum = 10
+	batchSize = 10
+)
+
+func (s *urlSnipperService) DeleteURLs(ctx context.Context, ids []string) {
+	inputChan := make(chan []string, workerNum)
+
+	for i := 0; i < workerNum; i++ {
+		go s.deleteWorker(ctx, inputChan)
+	}
+
+	go func() {
+		for i := 0; i < len(ids); i += batchSize {
+			end := i + batchSize
+			if end > len(ids) {
+				end = len(ids)
+			}
+			inputChan <- ids[i:end]
+		}
+		close(inputChan)
+	}()
+
+}
+
+func (s *urlSnipperService) deleteWorker(ctx context.Context, input <-chan []string) error {
+
+	for {
+		select {
+		case ids, ok := <-input:
+			if !ok {
+				return nil
+			}
+			err := s.storage.DeleteURLs(ctx, ids)
+			if err != nil {
+				return err
+			}
+		case <-ctx.Done():
+			return nil
+		}
+	}
 
 }
