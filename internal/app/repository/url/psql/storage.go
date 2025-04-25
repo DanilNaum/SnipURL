@@ -80,7 +80,7 @@ func (s *storage) SetURL(ctx context.Context, id, url string) (int, error) {
 }
 
 func (s *storage) GetURL(ctx context.Context, id string) (string, error) {
-	query := `SELECT url FROM url WHERE id = $1`
+	query := `SELECT url FROM url WHERE id = $1 AND deleted = false`
 	var url string
 	err := s.conn.Master().QueryRow(ctx, query, id).Scan(&url)
 	if err != nil {
@@ -131,7 +131,7 @@ func (s *storage) GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error) 
 	if !ok {
 		return nil, errors.New("error get userID from context")
 	}
-	query := `SELECT id, url FROM url WHERE user_uuid = $1`
+	query := `SELECT id, url FROM url WHERE user_uuid = $1 AND deleted = false`
 	rows, err := s.conn.Master().Query(ctx, query, userID)
 	if err != nil {
 		return nil, err

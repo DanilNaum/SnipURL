@@ -9,7 +9,7 @@ import (
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 )
 
-func (l *snipEndpoint) createShortURLBatch(w http.ResponseWriter, r *http.Request) {
+func (s *snipEndpoint) createShortURLBatch(w http.ResponseWriter, r *http.Request) {
 	var req []*createShortURLBatchJSONRequest
 	var buf bytes.Buffer
 
@@ -29,7 +29,7 @@ func (l *snipEndpoint) createShortURLBatch(w http.ResponseWriter, r *http.Reques
 		urls = append(urls, createShortURLBatchJSONRequestToServiceModel(r))
 	}
 
-	res, err := l.service.SetURLs(r.Context(), urls)
+	res, err := s.service.SetURLs(r.Context(), urls)
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -38,7 +38,7 @@ func (l *snipEndpoint) createShortURLBatch(w http.ResponseWriter, r *http.Reques
 
 	resp := make([]*createShortURLBatchJSONResponse, 0, len(res))
 	for _, r := range res {
-		shortURL, err := url.JoinPath(l.baseURL, r.ShortURLID)
+		shortURL, err := url.JoinPath(s.baseURL, r.ShortURLID)
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return

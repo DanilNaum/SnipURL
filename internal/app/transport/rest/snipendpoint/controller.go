@@ -48,14 +48,14 @@ func NewSnipEndpoint(service service, conf config) (*snipEndpoint, error) {
 	}, nil
 }
 
-func (l *snipEndpoint) Register(r *chi.Mux) {
-	r.Route(l.prefix, func(r chi.Router) {
-		r.Post(endpointCreateShortURL, l.createShortURL)
-		r.Get(endpointGetURL, l.getURL)
-		r.Post(endpointCreateShortURLJSON, l.createShortURLJSON)
-		r.Post(endpointCreateShortURLBatch, l.createShortURLBatch)
-		r.Get(endpointGetUserURLs, l.getURLs)
-		r.Delete(endpointDeleteURLs, l.deleteURLs)
+func (s *snipEndpoint) Register(r *chi.Mux) {
+	r.Route(s.prefix, func(r chi.Router) {
+		r.Post(endpointCreateShortURL, s.createShortURL)
+		r.Get(endpointGetURL, s.getURL)
+		r.Post(endpointCreateShortURLJSON, s.createShortURLJSON)
+		r.Post(endpointCreateShortURLBatch, s.createShortURLBatch)
+		r.Get(endpointGetUserURLs, s.getURLs)
+		r.Delete(endpointDeleteURLs, s.deleteURLs)
 
 	})
 }

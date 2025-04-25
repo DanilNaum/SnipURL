@@ -4,11 +4,11 @@ import (
 	"net/http"
 )
 
-func (l *snipEndpoint) getURL(w http.ResponseWriter, r *http.Request) {
+func (s *snipEndpoint) getURL(w http.ResponseWriter, r *http.Request) {
 
 	id := r.PathValue("id")
 
-	url, err := l.service.GetURL(r.Context(), id)
+	url, err := s.service.GetURL(r.Context(), id)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return

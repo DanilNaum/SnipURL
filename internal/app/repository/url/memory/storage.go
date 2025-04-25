@@ -66,7 +66,9 @@ func (s *storage) GetURL(_ context.Context, id string) (string, error) {
 	if !ok {
 		return "", urlstorage.ErrNotFound
 	}
-
+	if url.Deleted {
+		return "", urlstorage.ErrDeleted
+	}
 	return url.OriginalURL, nil
 
 }
@@ -113,7 +115,9 @@ func (s *storage) GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error) 
 	urls := make([]*urlstorage.URLRecord, 0, expectedNumberOfURLs)
 	for _, url := range s.urls {
 		if url.UserID == userID {
-			urls = append(urls, url)
+			if !url.Deleted {
+				urls = append(urls, url)
+			}
 		}
 	}
 	return urls, nil

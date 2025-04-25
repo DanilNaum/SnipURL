@@ -11,7 +11,7 @@ import (
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 )
 
-func (l *snipEndpoint) createShortURLJSON(w http.ResponseWriter, r *http.Request) {
+func (s *snipEndpoint) createShortURLJSON(w http.ResponseWriter, r *http.Request) {
 	var req createShortURLJSONRequest
 	var buf bytes.Buffer
 
@@ -28,7 +28,7 @@ func (l *snipEndpoint) createShortURLJSON(w http.ResponseWriter, r *http.Request
 
 	originalURL := req.URL
 
-	id, err := l.service.SetURL(r.Context(), originalURL)
+	id, err := s.service.SetURL(r.Context(), originalURL)
 	switch {
 	case err == nil:
 		w.Header().Set("Content-Type", "application/json")
@@ -42,7 +42,7 @@ func (l *snipEndpoint) createShortURLJSON(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	fullURL, err := url.JoinPath(l.baseURL, id)
+	fullURL, err := url.JoinPath(s.baseURL, id)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return

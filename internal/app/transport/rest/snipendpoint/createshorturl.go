@@ -9,7 +9,7 @@ import (
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 )
 
-func (l *snipEndpoint) createShortURL(w http.ResponseWriter, r *http.Request) {
+func (s *snipEndpoint) createShortURL(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -19,7 +19,7 @@ func (l *snipEndpoint) createShortURL(w http.ResponseWriter, r *http.Request) {
 
 	originalURL := string(body)
 
-	id, err := l.service.SetURL(r.Context(), originalURL)
+	id, err := s.service.SetURL(r.Context(), originalURL)
 	switch {
 	case err == nil:
 		w.WriteHeader(http.StatusCreated)
@@ -30,7 +30,7 @@ func (l *snipEndpoint) createShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fullShortURL, err := url.JoinPath(l.baseURL, id)
+	fullShortURL, err := url.JoinPath(s.baseURL, id)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return

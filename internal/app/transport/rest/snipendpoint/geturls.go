@@ -5,9 +5,9 @@ import (
 	"net/http"
 )
 
-func (l *snipEndpoint) getURLs(w http.ResponseWriter, r *http.Request) {
+func (s *snipEndpoint) getURLs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	urls, err := l.service.GetURLs(r.Context())
+	urls, err := s.service.GetURLs(r.Context())
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -16,7 +16,7 @@ func (l *snipEndpoint) getURLs(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
-	urlsResp, err := getURLsJSONResponseFromServiceModel(l.baseURL, urls)
+	urlsResp, err := getURLsJSONResponseFromServiceModel(s.baseURL, urls)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
