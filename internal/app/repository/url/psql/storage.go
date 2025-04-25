@@ -80,14 +80,20 @@ func (s *storage) SetURL(ctx context.Context, id, url string) (int, error) {
 }
 
 func (s *storage) GetURL(ctx context.Context, id string) (string, error) {
-	query := `SELECT url FROM url WHERE id = $1 AND deleted = false`
+	query := `SELECT url, deleted FROM url WHERE id = $1`
 	var url string
-	err := s.conn.Master().QueryRow(ctx, query, id).Scan(&url)
+	var deleted bool
+	err := s.conn.Master().QueryRow(ctx, query, id).Scan(&url, &deleted)
 	if err != nil {
+
 		if errors.Is(err, pgx.ErrNoRows) {
 			return "", urlstorage.ErrNotFound
 		}
 		return "", err
+	}
+
+	if deleted {
+		return "", urlstorage.ErrDeleted
 	}
 	return url, nil
 }
