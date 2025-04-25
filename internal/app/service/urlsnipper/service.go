@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
+	"github.com/DanilNaum/SnipURL/internal/app/transport/rest/middlewares"
 	dump "github.com/DanilNaum/SnipURL/pkg/utils/dumper"
 )
 
@@ -16,7 +17,10 @@ var (
 	ErrDeleted            = fmt.Errorf("deleted")
 )
 
-const _maxAttempts = 10
+const (
+	_maxAttempts = 10
+	batchSize    = 10
+)
 
 //go:generate moq -out mock_url_storage_moq_test.go . urlStorage
 type urlStorage interface {
@@ -24,7 +28,6 @@ type urlStorage interface {
 	GetURL(ctx context.Context, id string) (string, error)
 	SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (insertedURLs []*urlstorage.URLRecord, err error)
 	GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error)
-	DeleteURLs(ctx context.Context, ids []string) error
 }
 
 //go:generate moq -out mock_hasher_moq_test.go . hasher
@@ -42,19 +45,25 @@ type logger interface {
 	Errorf(string, ...interface{})
 }
 
-type urlSnipperService struct {
-	storage urlStorage
-	hasher  hasher
-	dumper  dumper
-	logger  logger
+type deleteService interface {
+	Delete(userID string, input []string)
 }
 
-func NewURLSnipperService(storage urlStorage, hasher hasher, dumper dumper, logger logger) *urlSnipperService {
+type urlSnipperService struct {
+	storage       urlStorage
+	hasher        hasher
+	dumper        dumper
+	logger        logger
+	deleteService deleteService
+}
+
+func NewURLSnipperService(storage urlStorage, hasher hasher, dumper dumper, deleteService deleteService, logger logger) *urlSnipperService {
 	return &urlSnipperService{
-		storage: storage,
-		hasher:  hasher,
-		dumper:  dumper,
-		logger:  logger,
+		storage:       storage,
+		hasher:        hasher,
+		dumper:        dumper,
+		deleteService: deleteService,
+		logger:        logger,
 	}
 }
 
@@ -161,17 +170,12 @@ func (s *urlSnipperService) GetURLs(ctx context.Context) ([]*URL, error) {
 
 }
 
-// This const allows to configure delete worker number and batch size
-const (
-	workerNum = 10
-	batchSize = 10
-)
+var key = middlewares.Key{Key: "userID"}
 
 func (s *urlSnipperService) DeleteURLs(ctx context.Context, ids []string) {
-	inputChan := make(chan []string, workerNum)
-
-	for i := 0; i < workerNum; i++ {
-		go s.deleteWorker(ctx, inputChan)
+	userID, ok := ctx.Value(key).(string)
+	if !ok {
+		return
 	}
 
 	go func() {
@@ -180,28 +184,8 @@ func (s *urlSnipperService) DeleteURLs(ctx context.Context, ids []string) {
 			if end > len(ids) {
 				end = len(ids)
 			}
-			inputChan <- ids[i:end]
+			s.deleteService.Delete(userID, ids[i:end])
 		}
-		close(inputChan)
 	}()
-
-}
-
-func (s *urlSnipperService) deleteWorker(ctx context.Context, input <-chan []string) error {
-
-	for {
-		select {
-		case ids, ok := <-input:
-			if !ok {
-				return nil
-			}
-			err := s.storage.DeleteURLs(ctx, ids)
-			if err != nil {
-				return err
-			}
-		case <-ctx.Done():
-			return nil
-		}
-	}
 
 }

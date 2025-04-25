@@ -123,11 +123,8 @@ func (s *storage) GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error) 
 	return urls, nil
 }
 
-func (s *storage) DeleteURLs(ctx context.Context, ids []string) error {
-	userID, ok := ctx.Value(key).(string)
-	if !ok {
-		return errors.New("userID not found in context")
-	}
+func (s *storage) DeleteURLs(userID string, ids []string) error {
+
 	for _, id := range ids {
 		s.mu.Lock()
 		url, ok := s.urls[id]

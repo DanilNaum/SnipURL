@@ -21,6 +21,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
+	deleteurl "github.com/DanilNaum/SnipURL/internal/app/service/deleteurl"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -61,7 +62,7 @@ func run(log *zap.SugaredLogger) error {
 		SetURL(ctx context.Context, id, url string) (int, error)
 		SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) ([]*urlstorage.URLRecord, error)
 		GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error)
-		DeleteURLs(ctx context.Context, ids []string) error
+		DeleteURLs(userID string, ids []string) error
 	}
 
 	dump, err := dumper.NewDumper(conf.DumpConfig().GetPath(), log)
@@ -101,7 +102,8 @@ func run(log *zap.SugaredLogger) error {
 
 	hash := hash.NewHasher(8)
 
-	urlSnipperService := urlsnipper.NewURLSnipperService(urlStorage, hash, dump, log)
+	deleteService := deleteurl.NewDeleteService(ctx, urlStorage)
+	urlSnipperService := urlsnipper.NewURLSnipperService(urlStorage, hash, dump, deleteService, log)
 
 	mux := chi.NewRouter()
 
