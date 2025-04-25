@@ -165,7 +165,7 @@ func (s *storage) DeleteURLs(ctx context.Context, ids []string) error {
 		return errors.New("error get userID from context")
 	}
 	query := `UPDATE url SET deleted = true WHERE id = ANY($1) AND user_uuid = $2`
-	_, err := s.conn.Master().Exec(ctx, query, ids, userID)
+	_, err := s.conn.Master().Exec(context.TODO(), query, ids, userID)
 	if err != nil {
 		return err
 	}
