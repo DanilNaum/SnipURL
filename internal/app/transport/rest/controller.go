@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/DanilNaum/SnipURL/internal/app/transport/rest/pprof"
+
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 	middlewares "github.com/DanilNaum/SnipURL/internal/app/transport/rest/middlewares"
 	psqlping "github.com/DanilNaum/SnipURL/internal/app/transport/rest/psqlPing"
@@ -51,7 +53,11 @@ func NewController(mux *chi.Mux, conf config, service service, psqlStoragePinger
 	psqlPingEndpoint := psqlping.NewPsqlPingEndpoint(psqlStoragePinger)
 
 	psqlPingEndpoint.Register(muxWithMiddlewares)
+
 	snipEndpoint.Register(muxWithMiddlewares)
+
+	pprofEndpoint := pprof.NewPProfEndpoint()
+	pprofEndpoint.Register(muxWithMiddlewares)
 
 	return muxWithMiddlewares, nil
 }
