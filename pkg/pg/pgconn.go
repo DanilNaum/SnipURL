@@ -2,7 +2,6 @@ package pg
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -21,6 +20,6 @@ func NewConnection(ctx context.Context, cnf *connConfig, log logger) *pgxpool.Po
 		return nil
 	}
 
-	log.Info("msg", fmt.Sprintf("Database connection established"))
+	log.Info("msg", "Database connection established")
 	return pg
 }
