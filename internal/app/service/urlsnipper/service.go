@@ -41,6 +41,7 @@ type dumper interface {
 	ReadAll() (chan dump.URLRecord, error)
 }
 
+//go:generate moq -out mock_logger_moq_test.go . logger
 type logger interface {
 	Errorf(string, ...interface{})
 }
