@@ -56,21 +56,12 @@ func run(log *zap.SugaredLogger) error {
 
 	defer cancel()
 
-	type storage interface {
-		Ping(ctx context.Context) error
-		GetURL(ctx context.Context, id string) (string, error)
-		SetURL(ctx context.Context, id, url string) (int, error)
-		SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) ([]*urlstorage.URLRecord, error)
-		GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error)
-		DeleteURLs(userID string, ids []string) error
-	}
-
 	dump, err := dumper.NewDumper(conf.DumpConfig().GetPath(), log)
 	if err != nil {
 		return err
 	}
 
-	var urlStorage storage
+	var urlStorage urlstorage.URLStorage
 
 	if conf.DBConfig().GetDSN() != "" {
 		migrator := migration.NewMigrator(conf.DBConfig().GetDSN(), migration.WithRelativePath("migrations"))

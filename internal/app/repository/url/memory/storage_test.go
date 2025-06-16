@@ -2,7 +2,6 @@ package memory
 
 import (
 	"context"
-	"sync"
 	"testing"
 
 	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
@@ -79,7 +78,6 @@ func TestStorage_SetURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &storage{
 				urls: tt.startStorageState,
-				mu:   sync.RWMutex{},
 			}
 
 			length, err := s.SetURL(context.Background(), tt.args.id, tt.args.url)
@@ -152,7 +150,6 @@ func TestStorage_GetURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &storage{
 				urls: tt.startStorageState,
-				mu:   sync.RWMutex{},
 			}
 
 			got, err := s.GetURL(context.Background(), tt.id)

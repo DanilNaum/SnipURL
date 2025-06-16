@@ -21,15 +21,11 @@ const (
 
 var key = middlewares.Key{Key: "userID"}
 
-type connection interface {
-	Master() *pgxpool.Pool
-	Close()
-}
 type storage struct {
-	conn connection
+	conn *pgxpool.Pool
 }
 
-func NewStorage(conn connection) *storage {
+func NewStorage(conn *pgxpool.Pool) *storage {
 	return &storage{
 		conn: conn,
 	}
@@ -39,7 +35,7 @@ func (s *storage) Ping(ctx context.Context) error {
 	if s.conn == nil {
 		return errors.New("connection is nil")
 	}
-	err := s.conn.Master().Ping(ctx)
+	err := s.conn.Ping(ctx)
 	if err != nil {
 		return err
 	}
@@ -57,7 +53,7 @@ func (s *storage) SetURL(ctx context.Context, id, url string) (int, error) {
 
 	var uuid int
 
-	err := s.conn.Master().QueryRow(context.Background(), query, id, url, userID).Scan(&uuid)
+	err := s.conn.QueryRow(context.Background(), query, id, url, userID).Scan(&uuid)
 
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -65,7 +61,7 @@ func (s *storage) SetURL(ctx context.Context, id, url string) (int, error) {
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == pgerrcode.UniqueViolation {
 				query = `SELECT uuid FROM url WHERE url = $1`
-				err = s.conn.Master().QueryRow(context.Background(), query, url).Scan(&uuid)
+				err = s.conn.QueryRow(context.Background(), query, url).Scan(&uuid)
 				if err != nil {
 					return 0, err
 				}
@@ -83,7 +79,7 @@ func (s *storage) GetURL(ctx context.Context, id string) (string, error) {
 	query := `SELECT url, deleted FROM url WHERE id = $1`
 	var url string
 	var deleted bool
-	err := s.conn.Master().QueryRow(ctx, query, id).Scan(&url, &deleted)
+	err := s.conn.QueryRow(ctx, query, id).Scan(&url, &deleted)
 	if err != nil {
 
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -110,7 +106,7 @@ func (s *storage) SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (in
   	ON CONFLICT (id) DO NOTHING
   	RETURNING uuid, id, url`, placeholder)
 
-	rows, err := s.conn.Master().Query(ctx,
+	rows, err := s.conn.Query(ctx,
 		query,
 		valuesForInsert(userID, urls)...,
 	)
@@ -138,7 +134,7 @@ func (s *storage) GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error) 
 		return nil, errors.New("error get userID from context")
 	}
 	query := `SELECT id, url FROM url WHERE user_uuid = $1 AND deleted = false`
-	rows, err := s.conn.Master().Query(ctx, query, userID)
+	rows, err := s.conn.Query(ctx, query, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +164,7 @@ func valuesForInsert(userID string, urlRecords []*urlstorage.URLRecord) []interf
 func (s *storage) DeleteURLs(userID string, ids []string) error {
 
 	query := `UPDATE url SET deleted = true WHERE id = ANY($1) AND user_uuid = $2`
-	_, err := s.conn.Master().Exec(context.TODO(), query, ids, userID)
+	_, err := s.conn.Exec(context.TODO(), query, ids, userID)
 	if err != nil {
 		return err
 	}

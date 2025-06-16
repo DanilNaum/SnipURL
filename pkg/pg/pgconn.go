@@ -12,39 +12,15 @@ type logger interface {
 	Errorf(template string, args ...interface{})
 }
 
-type connection struct {
-	masterPool *pgxpool.Pool
-}
-
-func (c *connection) Master() *pgxpool.Pool {
-	return c.masterPool
-}
-
-func (c *connection) Close() {
-	c.Master().Close()
-
-}
-
-func NewConnection(ctx context.Context, cnf *connConfig, log logger) *connection {
+func NewConnection(ctx context.Context, cnf *connConfig, log logger) *pgxpool.Pool {
 	masterDsn := cnf.getDsn()
 
-	masterPool := createPool(ctx, masterDsn, "master", log)
-	if masterPool == nil {
-		return nil
-	}
-
-	return &connection{
-		masterPool: masterPool,
-	}
-}
-
-func createPool(ctx context.Context, dsn, tp string, log logger) *pgxpool.Pool {
-	pg, err := pgxpool.Connect(ctx, dsn)
+	pg, err := pgxpool.Connect(ctx, masterDsn)
 	if err != nil {
-		log.Errorf("сould not establish db %s connection %s", tp, err.Error())
+		log.Errorf("сould not establish db connection %s", err.Error())
 		return nil
 	}
 
-	log.Info("msg", fmt.Sprintf("Database connection %s established", tp))
+	log.Info("msg", fmt.Sprintf("Database connection established"))
 	return pg
 }

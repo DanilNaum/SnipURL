@@ -27,7 +27,6 @@ type storage struct {
 
 func NewStorage() *storage {
 	return &storage{
-		mu:   sync.RWMutex{},
 		urls: make(map[string]*urlstorage.URLRecord),
 	}
 }
@@ -36,12 +35,17 @@ func (s *storage) Ping(ctx context.Context) error {
 	return errors.New("not implemented")
 }
 func (s *storage) SetURL(ctx context.Context, id, url string) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.setURL(ctx, id, url)
+
+}
+
+func (s *storage) setURL(ctx context.Context, id, url string) (int, error) {
 	userID, ok := ctx.Value(key).(string)
 	if !ok {
 		userID = ""
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if oldURL, ok := s.urls[id]; ok && oldURL.OriginalURL != url {
 		return 0, urlstorage.ErrIDIsBusy
@@ -90,14 +94,16 @@ func (s *storage) RestoreStorage(dumper dumper) error {
 
 func (s *storage) SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (insertedURLs []*urlstorage.URLRecord, err error) {
 	inserted := make([]*urlstorage.URLRecord, 0, len(urls))
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	for _, url := range urls {
-		_, err := s.SetURL(ctx, url.ShortURL, url.OriginalURL)
+		_, err := s.setURL(ctx, url.ShortURL, url.OriginalURL)
 		if err != nil {
 			if errors.Is(err, urlstorage.ErrIDIsBusy) {
-
-			} else {
-				return nil, err
+				continue
 			}
+			return nil, err
+
 		}
 		url.ID = len(s.urls)
 		inserted = append(inserted, url)
@@ -124,20 +130,19 @@ func (s *storage) GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error) 
 }
 
 func (s *storage) DeleteURLs(userID string, ids []string) error {
-
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	for _, id := range ids {
-		s.mu.Lock()
 		url, ok := s.urls[id]
-		s.mu.Unlock()
+
 		if !ok {
 			continue
 		}
 		if url.UserID != userID {
 			continue
 		}
-		s.mu.Lock()
+
 		url.Deleted = true
-		s.mu.Unlock()
 	}
 	return nil
 }
