@@ -1,33 +1,31 @@
 package snipendpoint
 
 import (
-	"io"
+	"encoding/json"
 	"net/http"
-	"net/url"
 )
 
-func (l *snipEndpoint) post(w http.ResponseWriter, r *http.Request) {
-
-	body, err := io.ReadAll(r.Body)
+func (s *snipEndpoint) getURLs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	urls, err := s.service.GetURLs(r.Context())
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	if len(urls) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	urlsResp, err := getURLsJSONResponseFromServiceModel(s.baseURL, urls)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	resp, err := json.Marshal(urlsResp)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	originalURL := string(body)
-
-	id, err := l.service.SetURL(r.Context(), originalURL)
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	fullURL, err := url.JoinPath(l.baseURL, id)
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(fullURL))
+	w.Write(resp)
 }

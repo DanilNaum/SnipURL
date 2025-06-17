@@ -5,6 +5,7 @@ package snipendpoint
 
 import (
 	"context"
+	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 	"sync"
 )
 
@@ -18,11 +19,20 @@ var _ service = &serviceMock{}
 //
 //		// make and configure a mocked service
 //		mockedservice := &serviceMock{
+//			DeleteURLsFunc: func(ctx context.Context, ids []string)  {
+//				panic("mock out the DeleteURLs method")
+//			},
 //			GetURLFunc: func(ctx context.Context, id string) (string, error) {
 //				panic("mock out the GetURL method")
 //			},
+//			GetURLsFunc: func(ctx context.Context) ([]*urlsnipper.URL, error) {
+//				panic("mock out the GetURLs method")
+//			},
 //			SetURLFunc: func(ctx context.Context, url string) (string, error) {
 //				panic("mock out the SetURL method")
+//			},
+//			SetURLsFunc: func(ctx context.Context, urls []*urlsnipper.SetURLsInput) (map[string]*urlsnipper.SetURLsOutput, error) {
+//				panic("mock out the SetURLs method")
 //			},
 //		}
 //
@@ -31,20 +41,41 @@ var _ service = &serviceMock{}
 //
 //	}
 type serviceMock struct {
+	// DeleteURLsFunc mocks the DeleteURLs method.
+	DeleteURLsFunc func(ctx context.Context, ids []string)
+
 	// GetURLFunc mocks the GetURL method.
 	GetURLFunc func(ctx context.Context, id string) (string, error)
+
+	// GetURLsFunc mocks the GetURLs method.
+	GetURLsFunc func(ctx context.Context) ([]*urlsnipper.URL, error)
 
 	// SetURLFunc mocks the SetURL method.
 	SetURLFunc func(ctx context.Context, url string) (string, error)
 
+	// SetURLsFunc mocks the SetURLs method.
+	SetURLsFunc func(ctx context.Context, urls []*urlsnipper.SetURLsInput) (map[string]*urlsnipper.SetURLsOutput, error)
+
 	// calls tracks calls to the methods.
 	calls struct {
+		// DeleteURLs holds details about calls to the DeleteURLs method.
+		DeleteURLs []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Ids is the ids argument value.
+			Ids []string
+		}
 		// GetURL holds details about calls to the GetURL method.
 		GetURL []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
+		}
+		// GetURLs holds details about calls to the GetURLs method.
+		GetURLs []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 		}
 		// SetURL holds details about calls to the SetURL method.
 		SetURL []struct {
@@ -53,9 +84,55 @@ type serviceMock struct {
 			// URL is the url argument value.
 			URL string
 		}
+		// SetURLs holds details about calls to the SetURLs method.
+		SetURLs []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Urls is the urls argument value.
+			Urls []*urlsnipper.SetURLsInput
+		}
 	}
-	lockGetURL sync.RWMutex
-	lockSetURL sync.RWMutex
+	lockDeleteURLs sync.RWMutex
+	lockGetURL     sync.RWMutex
+	lockGetURLs    sync.RWMutex
+	lockSetURL     sync.RWMutex
+	lockSetURLs    sync.RWMutex
+}
+
+// DeleteURLs calls DeleteURLsFunc.
+func (mock *serviceMock) DeleteURLs(ctx context.Context, ids []string) {
+	if mock.DeleteURLsFunc == nil {
+		panic("serviceMock.DeleteURLsFunc: method is nil but service.DeleteURLs was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Ids []string
+	}{
+		Ctx: ctx,
+		Ids: ids,
+	}
+	mock.lockDeleteURLs.Lock()
+	mock.calls.DeleteURLs = append(mock.calls.DeleteURLs, callInfo)
+	mock.lockDeleteURLs.Unlock()
+	mock.DeleteURLsFunc(ctx, ids)
+}
+
+// DeleteURLsCalls gets all the calls that were made to DeleteURLs.
+// Check the length with:
+//
+//	len(mockedservice.DeleteURLsCalls())
+func (mock *serviceMock) DeleteURLsCalls() []struct {
+	Ctx context.Context
+	Ids []string
+} {
+	var calls []struct {
+		Ctx context.Context
+		Ids []string
+	}
+	mock.lockDeleteURLs.RLock()
+	calls = mock.calls.DeleteURLs
+	mock.lockDeleteURLs.RUnlock()
+	return calls
 }
 
 // GetURL calls GetURLFunc.
@@ -94,6 +171,38 @@ func (mock *serviceMock) GetURLCalls() []struct {
 	return calls
 }
 
+// GetURLs calls GetURLsFunc.
+func (mock *serviceMock) GetURLs(ctx context.Context) ([]*urlsnipper.URL, error) {
+	if mock.GetURLsFunc == nil {
+		panic("serviceMock.GetURLsFunc: method is nil but service.GetURLs was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.lockGetURLs.Lock()
+	mock.calls.GetURLs = append(mock.calls.GetURLs, callInfo)
+	mock.lockGetURLs.Unlock()
+	return mock.GetURLsFunc(ctx)
+}
+
+// GetURLsCalls gets all the calls that were made to GetURLs.
+// Check the length with:
+//
+//	len(mockedservice.GetURLsCalls())
+func (mock *serviceMock) GetURLsCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	mock.lockGetURLs.RLock()
+	calls = mock.calls.GetURLs
+	mock.lockGetURLs.RUnlock()
+	return calls
+}
+
 // SetURL calls SetURLFunc.
 func (mock *serviceMock) SetURL(ctx context.Context, url string) (string, error) {
 	if mock.SetURLFunc == nil {
@@ -127,5 +236,41 @@ func (mock *serviceMock) SetURLCalls() []struct {
 	mock.lockSetURL.RLock()
 	calls = mock.calls.SetURL
 	mock.lockSetURL.RUnlock()
+	return calls
+}
+
+// SetURLs calls SetURLsFunc.
+func (mock *serviceMock) SetURLs(ctx context.Context, urls []*urlsnipper.SetURLsInput) (map[string]*urlsnipper.SetURLsOutput, error) {
+	if mock.SetURLsFunc == nil {
+		panic("serviceMock.SetURLsFunc: method is nil but service.SetURLs was just called")
+	}
+	callInfo := struct {
+		Ctx  context.Context
+		Urls []*urlsnipper.SetURLsInput
+	}{
+		Ctx:  ctx,
+		Urls: urls,
+	}
+	mock.lockSetURLs.Lock()
+	mock.calls.SetURLs = append(mock.calls.SetURLs, callInfo)
+	mock.lockSetURLs.Unlock()
+	return mock.SetURLsFunc(ctx, urls)
+}
+
+// SetURLsCalls gets all the calls that were made to SetURLs.
+// Check the length with:
+//
+//	len(mockedservice.SetURLsCalls())
+func (mock *serviceMock) SetURLsCalls() []struct {
+	Ctx  context.Context
+	Urls []*urlsnipper.SetURLsInput
+} {
+	var calls []struct {
+		Ctx  context.Context
+		Urls []*urlsnipper.SetURLsInput
+	}
+	mock.lockSetURLs.RLock()
+	calls = mock.calls.SetURLs
+	mock.lockSetURLs.RUnlock()
 	return calls
 }

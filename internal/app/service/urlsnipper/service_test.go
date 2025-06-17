@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	dump "github.com/DanilNaum/SnipURL/pkg/utils/dumper"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,7 +15,7 @@ func TestUrlSnipperService_SetURL(t *testing.T) {
 		url                 string
 		hashResults         []string
 		hashFuncGenerator   func() func(s string) string
-		setURLFuncGenerator func() func(ctx context.Context, id string, url string) error
+		setURLFuncGenerator func() func(ctx context.Context, id string, url string) (int, error)
 		setURLResults       []error
 
 		want    string
@@ -37,16 +38,16 @@ func TestUrlSnipperService_SetURL(t *testing.T) {
 					}
 				}
 			},
-			setURLFuncGenerator: func() func(ctx context.Context, id string, url string) error {
+			setURLFuncGenerator: func() func(ctx context.Context, id string, url string) (int, error) {
 				i := 0
-				return func(ctx context.Context, id string, url string) error {
+				return func(ctx context.Context, id string, url string) (int, error) {
 					switch i {
 					case 0:
 						i++
-						return nil
+						return 1, nil
 					default:
 						t.Error("unexpected call to setURL function")
-						return nil
+						return -1, nil
 					}
 				}
 			},
@@ -73,19 +74,19 @@ func TestUrlSnipperService_SetURL(t *testing.T) {
 					}
 				}
 			},
-			setURLFuncGenerator: func() func(ctx context.Context, id string, url string) error {
+			setURLFuncGenerator: func() func(ctx context.Context, id string, url string) (int, error) {
 				i := 0
-				return func(ctx context.Context, id string, url string) error {
+				return func(ctx context.Context, id string, url string) (int, error) {
 					switch i {
 					case 0:
 						i++
-						return errors.New("collision")
+						return -1, errors.New("collision")
 					case 1:
 						i++
-						return nil
+						return 1, nil
 					default:
 						t.Error("unexpected call to setURL function")
-						return nil
+						return -1, nil
 					}
 				}
 			},
@@ -107,15 +108,15 @@ func TestUrlSnipperService_SetURL(t *testing.T) {
 					}
 				}
 			},
-			setURLFuncGenerator: func() func(ctx context.Context, id string, url string) error {
+			setURLFuncGenerator: func() func(ctx context.Context, id string, url string) (int, error) {
 				i := 0
-				return func(ctx context.Context, id string, url string) error {
+				return func(ctx context.Context, id string, url string) (int, error) {
 					if i < _maxAttempts {
 						i++
-						return errors.New("collision")
+						return -1, errors.New("collision")
 					} else {
 						t.Error("unexpected call to setURL function")
-						return nil
+						return -1, nil
 					}
 				}
 			},
@@ -134,9 +135,16 @@ func TestUrlSnipperService_SetURL(t *testing.T) {
 				SetURLFunc: tt.setURLFuncGenerator(),
 			}
 
+			mockDumper := &dumperMock{
+				AddFunc: func(record *dump.URLRecord) error {
+					return nil
+				},
+			}
+
 			s := &urlSnipperService{
 				hasher:  mockHasher,
 				storage: mockStorage,
+				dumper:  mockDumper,
 			}
 
 			got, err := s.SetURL(context.Background(), tt.url)

@@ -41,7 +41,12 @@ func NewHTTPServer(handler http.Handler, opts ...Option) *server {
 
 func (s *server) start() {
 	go func() {
-		s.notify <- s.server.ListenAndServe()
+		err := s.server.ListenAndServe()
+		if err != nil {
+			if err != http.ErrServerClosed {
+				s.notify <- err
+			}
+		}
 		close(s.notify)
 	}()
 }

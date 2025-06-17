@@ -3,53 +3,104 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/DanilNaum/SnipURL/internal/app/config"
 	"github.com/DanilNaum/SnipURL/internal/app/repository/url/memory"
+	"github.com/DanilNaum/SnipURL/internal/app/repository/url/psql"
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 	rest "github.com/DanilNaum/SnipURL/internal/app/transport/rest"
+	"github.com/DanilNaum/SnipURL/pkg/cookie"
+	"github.com/DanilNaum/SnipURL/pkg/migration"
+	"github.com/DanilNaum/SnipURL/pkg/pg"
+	"github.com/DanilNaum/SnipURL/pkg/utils/dumper"
 	"github.com/DanilNaum/SnipURL/pkg/utils/hash"
 	"github.com/DanilNaum/SnipURL/pkg/utils/httpserver"
 	"github.com/go-chi/chi/v5"
+
+	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
+	deleteurl "github.com/DanilNaum/SnipURL/internal/app/service/delete"
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
 func main() {
-	logger := log.New(os.Stdout, "URL Snipper: ", log.LstdFlags)
-	logger.Println("App is running...")
-	err := run(logger)
-
-	if err != nil && !errors.Is(err, context.Canceled) {
-		logger.Printf("App fail with error %s", err)
+	logger, err := zap.NewDevelopment()
+	if err != nil {
 		os.Exit(1)
 	}
 
-	logger.Println("App is gracefully shutdown")
+	defer logger.Sync()
+
+	sugarLogger := logger.Sugar()
+
+	sugarLogger.Info("App is running...")
+
+	err = run(sugarLogger)
+
+	if err != nil && !errors.Is(err, context.Canceled) {
+		sugarLogger.Fatalf("App fail with error %s", err.Error())
+	}
+
+	sugarLogger.Info("App is gracefully shutdown")
 	os.Exit(0)
 }
 
-func run(log *log.Logger) error {
+func run(log *zap.SugaredLogger) error {
 
 	conf := config.NewConfig(log)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+
 	defer cancel()
+
+	dump, err := dumper.NewDumper(conf.DumpConfig().GetPath(), log)
+	if err != nil {
+		return err
+	}
+
+	var urlStorage urlstorage.URLStorage
+
+	if conf.DBConfig().GetDSN() != "" {
+		migrator := migration.NewMigrator(conf.DBConfig().GetDSN(), migration.WithRelativePath("migrations"))
+		err := migrator.Migrate()
+		if err != nil {
+			return err
+		}
+
+		pgConf := pg.NewConnConfigFromDsnString(conf.DBConfig().GetDSN())
+
+		pgConn := pg.NewConnection(ctx, pgConf, log)
+		if pgConn == nil {
+			return errors.New("pg connection is nil")
+		}
+		defer pgConn.Close()
+		urlStorage = psql.NewStorage(pgConn)
+	} else {
+		storage := memory.NewStorage()
+
+		err := storage.RestoreStorage(dump)
+		if err != nil {
+			return err
+		}
+		urlStorage = storage
+		defer dump.Close()
+	}
 
 	services, ctx := errgroup.WithContext(ctx)
 
-	storage := memory.NewStorage()
-
 	hash := hash.NewHasher(8)
 
-	urlSnipperService := urlsnipper.NewURLSnipperService(storage, hash)
+	deleteService := deleteurl.NewDeleteService(ctx, urlStorage)
+	urlSnipperService := urlsnipper.NewURLSnipperService(urlStorage, hash, dump, deleteService, log)
 
 	mux := chi.NewRouter()
 
-	controller, err := rest.NewController(mux, conf.ServerConfig(), urlSnipperService)
+	cookieManager := cookie.NewCookieManager([]byte(conf.CookieConfig().GetSecret()), cookie.WithName("user"))
+
+	controller, err := rest.NewController(mux, conf.ServerConfig(), urlSnipperService, urlStorage, cookieManager, log)
 
 	if err != nil {
 		return err
@@ -66,7 +117,7 @@ func run(log *log.Logger) error {
 		<-ctx.Done()
 		err := httpServer.Shutdown()
 		if err != nil {
-			log.Printf("shutdown error: %s", err)
+			log.Errorf("shutdown error: %s", err)
 		}
 	}()
 

@@ -1,117 +1,34 @@
 package server
 
 import (
-	"flag"
 	"fmt"
-	"os"
+
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestServer_NewConfig(t *testing.T) {
-	tests := []struct {
-		name     string
-		args     []string
-		env      map[string]string
-		expected *config
-	}{
-		{
-			name: "default_values",
-			args: []string{},
-			expected: &config{
-				Host:    "localhost:8080",
-				BaseURL: "http://localhost:8080",
-			},
-		},
-		{
-			name: "custom_host_and_base_url_from_flags",
-			args: []string{"-a", "example.com:8443", "-b", "https://example.com:8443"},
-			expected: &config{
-				Host:    "example.com:8443",
-				BaseURL: "https://example.com:8443",
-			},
-		},
-		{
-			name: "custom_host_and_base_url_from_env",
-			env: map[string]string{
-				"SERVER_ADDRESS": "example.com:8443",
-				"BASE_URL":       "https://example.com:8443",
-			},
-			expected: &config{
-				Host:    "example.com:8443",
-				BaseURL: "https://example.com:8443",
-			},
-		},
-		{
-			name: "custom_host_and_base_url_from_flags_and_env",
-			args: []string{"-a", "example_args.com:8443", "-b", "https://example_args.com:8443"},
-			env: map[string]string{
-				"SERVER_ADDRESS": "example.com:8443",
-				"BASE_URL":       "https://example.com:8443",
-			},
-			expected: &config{
-				Host:    "example.com:8443",
-				BaseURL: "https://example.com:8443",
-			},
-		},
-		{
-			name: "custom_host_in_flags_and_base_url_in_env",
-			args: []string{"-a", "example.com:8443"},
-			env: map[string]string{
-				"BASE_URL": "https://example.com:8443",
-			},
-			expected: &config{
-				Host:    "example.com:8443",
-				BaseURL: "https://example.com:8443",
-			},
-		},
-		{
-			name: "custom_host_in_env_and_base_url_in_flags",
-			args: []string{"-b", "https://example.com:8443"},
-			env: map[string]string{
-				"SERVER_ADDRESS": "example.com:8443",
-			},
-			expected: &config{
-				Host:    "example.com:8443",
-				BaseURL: "https://example.com:8443",
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			flag.CommandLine = flag.NewFlagSet(tt.name, flag.ExitOnError)
-
-			os.Args = append([]string{"cmd"}, tt.args...)
-
-			for key, value := range tt.env {
-				t.Setenv(key, value)
-			}
-
-			result := NewConfig(&loggerMock{})
-
-			require.Equal(t, tt.expected.Host, result.Host)
-			require.Equal(t, tt.expected.BaseURL, result.BaseURL)
-		})
-	}
+type conf struct {
+	Host    string
+	BaseURL string
 }
+
 func TestServer_ConfigValidate(t *testing.T) {
 	tests := []struct {
 		name          string
-		config        *config
+		config        *conf
 		expectedError string
 	}{
 		{
 			name: "valid_host_and_baseurl",
-			config: &config{
+			config: &conf{
 				Host:    "example.com:8080",
 				BaseURL: "https://example.com:8080",
 			},
 		},
 		{
 			name: "invalid_host_no_domain",
-			config: &config{
+			config: &conf{
 				Host:    ":8080",
 				BaseURL: "https://example.com",
 			},
@@ -120,7 +37,7 @@ func TestServer_ConfigValidate(t *testing.T) {
 		},
 		{
 			name: "invalid_host_special_chars",
-			config: &config{
+			config: &conf{
 				Host:    "example@.com:8080",
 				BaseURL: "https://example.com",
 			},
@@ -128,7 +45,7 @@ func TestServer_ConfigValidate(t *testing.T) {
 		},
 		{
 			name: "invalid_baseurl_no_protocol",
-			config: &config{
+			config: &conf{
 				Host:    "example.com:8080",
 				BaseURL: "example.com",
 			},
@@ -136,7 +53,7 @@ func TestServer_ConfigValidate(t *testing.T) {
 		},
 		{
 			name: "invalid_baseurl_wrong_protocol",
-			config: &config{
+			config: &conf{
 				Host:    "example.com:8080",
 				BaseURL: "ftp://example.com",
 			},
@@ -144,21 +61,21 @@ func TestServer_ConfigValidate(t *testing.T) {
 		},
 		{
 			name: "valid_host_with_subdomain",
-			config: &config{
+			config: &conf{
 				Host:    "sub.example.com:8080",
 				BaseURL: "http://sub.example.com:8080",
 			},
 		},
 		{
 			name: "valid_baseurl_with_path",
-			config: &config{
+			config: &conf{
 				Host:    "example.com:8080",
 				BaseURL: "https://example.com:8080/path/to/resource",
 			},
 		},
 		{
 			name: "host_and_baseurl_do_not_match",
-			config: &config{
+			config: &conf{
 				Host:    "example.com:8080",
 				BaseURL: "https://example.com:8081",
 			},
@@ -174,8 +91,11 @@ func TestServer_ConfigValidate(t *testing.T) {
 					require.Equal(t, tt.expectedError, err)
 				},
 			}
-
-			tt.config.validate(loggerMock)
+			config := &serverConfig{
+				Host:    &tt.config.Host,
+				BaseURL: &tt.config.BaseURL,
+			}
+			config.ValidateServerConfig(loggerMock)
 
 		})
 	}
@@ -183,13 +103,13 @@ func TestServer_ConfigValidate(t *testing.T) {
 func TestServer_ConfigGetPrefix(t *testing.T) {
 	tests := []struct {
 		name         string
-		config       *config
+		config       *conf
 		expectedPath string
 		expectError  bool
 	}{
 		{
 			name: "empty_path",
-			config: &config{
+			config: &conf{
 				BaseURL: "http://example.com",
 			},
 			expectedPath: "/",
@@ -197,7 +117,7 @@ func TestServer_ConfigGetPrefix(t *testing.T) {
 		},
 		{
 			name: "root_path",
-			config: &config{
+			config: &conf{
 				BaseURL: "http://example.com/",
 			},
 			expectedPath: "/",
@@ -205,7 +125,7 @@ func TestServer_ConfigGetPrefix(t *testing.T) {
 		},
 		{
 			name: "single_level_path",
-			config: &config{
+			config: &conf{
 				BaseURL: "http://example.com/api",
 			},
 			expectedPath: "/api",
@@ -213,7 +133,7 @@ func TestServer_ConfigGetPrefix(t *testing.T) {
 		},
 		{
 			name: "multi_level_path",
-			config: &config{
+			config: &conf{
 				BaseURL: "http://example.com/api/v1/users",
 			},
 			expectedPath: "/api/v1/users",
@@ -221,7 +141,7 @@ func TestServer_ConfigGetPrefix(t *testing.T) {
 		},
 		{
 			name: "path_with_query_params",
-			config: &config{
+			config: &conf{
 				BaseURL: "http://example.com/api?version=1",
 			},
 			expectedPath: "/api",
@@ -229,7 +149,7 @@ func TestServer_ConfigGetPrefix(t *testing.T) {
 		},
 		{
 			name: "path_with_fragment",
-			config: &config{
+			config: &conf{
 				BaseURL: "http://example.com/api#section1",
 			},
 			expectedPath: "/api",
@@ -237,7 +157,7 @@ func TestServer_ConfigGetPrefix(t *testing.T) {
 		},
 		{
 			name: "invalid_url",
-			config: &config{
+			config: &conf{
 				BaseURL: "://invalid-url",
 			},
 			expectedPath: "",
@@ -245,7 +165,7 @@ func TestServer_ConfigGetPrefix(t *testing.T) {
 		},
 		{
 			name: "encoded_path_segments",
-			config: &config{
+			config: &conf{
 				BaseURL: "http://example.com/api/user%20space/data",
 			},
 			expectedPath: "/api/user space/data",
@@ -255,7 +175,10 @@ func TestServer_ConfigGetPrefix(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path, err := tt.config.GetPrefix()
+			config := &serverConfig{
+				BaseURL: &tt.config.BaseURL,
+			}
+			path, err := config.GetPrefix()
 
 			if tt.expectError {
 				require.Error(t, err)

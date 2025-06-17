@@ -5,6 +5,7 @@ package urlsnipper
 
 import (
 	"context"
+	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
 	"sync"
 )
 
@@ -18,11 +19,20 @@ var _ urlStorage = &urlStorageMock{}
 //
 //		// make and configure a mocked urlStorage
 //		mockedurlStorage := &urlStorageMock{
+//			DeleteURLsFunc: func(ctx context.Context, ids []string) error {
+//				panic("mock out the DeleteURLs method")
+//			},
 //			GetURLFunc: func(ctx context.Context, id string) (string, error) {
 //				panic("mock out the GetURL method")
 //			},
-//			SetURLFunc: func(ctx context.Context, id string, url string) error {
+//			GetURLsFunc: func(ctx context.Context) ([]*urlstorage.URLRecord, error) {
+//				panic("mock out the GetURLs method")
+//			},
+//			SetURLFunc: func(ctx context.Context, id string, url string) (int, error) {
 //				panic("mock out the SetURL method")
+//			},
+//			SetURLsFunc: func(ctx context.Context, urls []*urlstorage.URLRecord) ([]*urlstorage.URLRecord, error) {
+//				panic("mock out the SetURLs method")
 //			},
 //		}
 //
@@ -31,20 +41,41 @@ var _ urlStorage = &urlStorageMock{}
 //
 //	}
 type urlStorageMock struct {
+	// DeleteURLsFunc mocks the DeleteURLs method.
+	DeleteURLsFunc func(ctx context.Context, ids []string) error
+
 	// GetURLFunc mocks the GetURL method.
 	GetURLFunc func(ctx context.Context, id string) (string, error)
 
+	// GetURLsFunc mocks the GetURLs method.
+	GetURLsFunc func(ctx context.Context) ([]*urlstorage.URLRecord, error)
+
 	// SetURLFunc mocks the SetURL method.
-	SetURLFunc func(ctx context.Context, id string, url string) error
+	SetURLFunc func(ctx context.Context, id string, url string) (int, error)
+
+	// SetURLsFunc mocks the SetURLs method.
+	SetURLsFunc func(ctx context.Context, urls []*urlstorage.URLRecord) ([]*urlstorage.URLRecord, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// DeleteURLs holds details about calls to the DeleteURLs method.
+		DeleteURLs []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Ids is the ids argument value.
+			Ids []string
+		}
 		// GetURL holds details about calls to the GetURL method.
 		GetURL []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
+		}
+		// GetURLs holds details about calls to the GetURLs method.
+		GetURLs []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 		}
 		// SetURL holds details about calls to the SetURL method.
 		SetURL []struct {
@@ -55,9 +86,55 @@ type urlStorageMock struct {
 			// URL is the url argument value.
 			URL string
 		}
+		// SetURLs holds details about calls to the SetURLs method.
+		SetURLs []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Urls is the urls argument value.
+			Urls []*urlstorage.URLRecord
+		}
 	}
-	lockGetURL sync.RWMutex
-	lockSetURL sync.RWMutex
+	lockDeleteURLs sync.RWMutex
+	lockGetURL     sync.RWMutex
+	lockGetURLs    sync.RWMutex
+	lockSetURL     sync.RWMutex
+	lockSetURLs    sync.RWMutex
+}
+
+// DeleteURLs calls DeleteURLsFunc.
+func (mock *urlStorageMock) DeleteURLs(ctx context.Context, ids []string) error {
+	if mock.DeleteURLsFunc == nil {
+		panic("urlStorageMock.DeleteURLsFunc: method is nil but urlStorage.DeleteURLs was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Ids []string
+	}{
+		Ctx: ctx,
+		Ids: ids,
+	}
+	mock.lockDeleteURLs.Lock()
+	mock.calls.DeleteURLs = append(mock.calls.DeleteURLs, callInfo)
+	mock.lockDeleteURLs.Unlock()
+	return mock.DeleteURLsFunc(ctx, ids)
+}
+
+// DeleteURLsCalls gets all the calls that were made to DeleteURLs.
+// Check the length with:
+//
+//	len(mockedurlStorage.DeleteURLsCalls())
+func (mock *urlStorageMock) DeleteURLsCalls() []struct {
+	Ctx context.Context
+	Ids []string
+} {
+	var calls []struct {
+		Ctx context.Context
+		Ids []string
+	}
+	mock.lockDeleteURLs.RLock()
+	calls = mock.calls.DeleteURLs
+	mock.lockDeleteURLs.RUnlock()
+	return calls
 }
 
 // GetURL calls GetURLFunc.
@@ -96,8 +173,40 @@ func (mock *urlStorageMock) GetURLCalls() []struct {
 	return calls
 }
 
+// GetURLs calls GetURLsFunc.
+func (mock *urlStorageMock) GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error) {
+	if mock.GetURLsFunc == nil {
+		panic("urlStorageMock.GetURLsFunc: method is nil but urlStorage.GetURLs was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.lockGetURLs.Lock()
+	mock.calls.GetURLs = append(mock.calls.GetURLs, callInfo)
+	mock.lockGetURLs.Unlock()
+	return mock.GetURLsFunc(ctx)
+}
+
+// GetURLsCalls gets all the calls that were made to GetURLs.
+// Check the length with:
+//
+//	len(mockedurlStorage.GetURLsCalls())
+func (mock *urlStorageMock) GetURLsCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	mock.lockGetURLs.RLock()
+	calls = mock.calls.GetURLs
+	mock.lockGetURLs.RUnlock()
+	return calls
+}
+
 // SetURL calls SetURLFunc.
-func (mock *urlStorageMock) SetURL(ctx context.Context, id string, url string) error {
+func (mock *urlStorageMock) SetURL(ctx context.Context, id string, url string) (int, error) {
 	if mock.SetURLFunc == nil {
 		panic("urlStorageMock.SetURLFunc: method is nil but urlStorage.SetURL was just called")
 	}
@@ -133,5 +242,41 @@ func (mock *urlStorageMock) SetURLCalls() []struct {
 	mock.lockSetURL.RLock()
 	calls = mock.calls.SetURL
 	mock.lockSetURL.RUnlock()
+	return calls
+}
+
+// SetURLs calls SetURLsFunc.
+func (mock *urlStorageMock) SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) ([]*urlstorage.URLRecord, error) {
+	if mock.SetURLsFunc == nil {
+		panic("urlStorageMock.SetURLsFunc: method is nil but urlStorage.SetURLs was just called")
+	}
+	callInfo := struct {
+		Ctx  context.Context
+		Urls []*urlstorage.URLRecord
+	}{
+		Ctx:  ctx,
+		Urls: urls,
+	}
+	mock.lockSetURLs.Lock()
+	mock.calls.SetURLs = append(mock.calls.SetURLs, callInfo)
+	mock.lockSetURLs.Unlock()
+	return mock.SetURLsFunc(ctx, urls)
+}
+
+// SetURLsCalls gets all the calls that were made to SetURLs.
+// Check the length with:
+//
+//	len(mockedurlStorage.SetURLsCalls())
+func (mock *urlStorageMock) SetURLsCalls() []struct {
+	Ctx  context.Context
+	Urls []*urlstorage.URLRecord
+} {
+	var calls []struct {
+		Ctx  context.Context
+		Urls []*urlstorage.URLRecord
+	}
+	mock.lockSetURLs.RLock()
+	calls = mock.calls.SetURLs
+	mock.lockSetURLs.RUnlock()
 	return calls
 }

@@ -12,12 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type errorReader struct{}
-
-func (errorReader) Read(p []byte) (n int, err error) {
-	return 0, errors.New("simulated read error")
-}
-func TestSnipEndpoint_post(t *testing.T) {
+func TestSnipEndpoint_createShortURLJSON(t *testing.T) {
 	type input struct {
 		body      string
 		bodyError bool
@@ -40,7 +35,7 @@ func TestSnipEndpoint_post(t *testing.T) {
 		{
 			name: "happy_path_http",
 			input: input{
-				body: "https://example.com",
+				body: `{"url":"https://example.com"}`,
 				host: "http://localhost:8080",
 			},
 			mocks: mocks{
@@ -51,13 +46,13 @@ func TestSnipEndpoint_post(t *testing.T) {
 			},
 			want: want{
 				code: http.StatusCreated,
-				body: "http://localhost:8080/abc123",
+				body: `{"result":"http://localhost:8080/abc123"}`,
 			},
 		},
 		{
 			name: "happy_path_https",
 			input: input{
-				body: "https://example.com",
+				body: `{"url":"https://example.com"}`,
 				host: "https://localhost:8080",
 			},
 			mocks: mocks{
@@ -68,14 +63,14 @@ func TestSnipEndpoint_post(t *testing.T) {
 			},
 			want: want{
 				code: http.StatusCreated,
-				body: "https://localhost:8080/abc123",
+				body: `{"result":"https://localhost:8080/abc123"}`,
 			},
 		},
 
 		{
 			name: "service_error",
 			input: input{
-				body: "https://example.com",
+				body: `{"url":"https://example.com"}`,
 				host: "https://localhost:8080",
 			},
 			mocks: mocks{
@@ -96,14 +91,25 @@ func TestSnipEndpoint_post(t *testing.T) {
 				host:      "https://localhost:8080",
 			},
 			want: want{
-				code: http.StatusInternalServerError,
-				body: "Internal Server Error",
+				code: http.StatusBadRequest,
+				body: http.StatusText(http.StatusBadRequest),
+			},
+		},
+		{
+			name: "json_error",
+			input: input{
+				body: `{"url`,
+				host: "https://localhost:8080",
+			},
+			want: want{
+				code: http.StatusBadRequest,
+				body: http.StatusText(http.StatusBadRequest),
 			},
 		},
 		{
 			name: "host_error",
 			input: input{
-				body: "https://example.com",
+				body: `{"url":"https://example.com"}`,
 				host: "asd",
 			},
 			mocks: mocks{
@@ -139,7 +145,7 @@ func TestSnipEndpoint_post(t *testing.T) {
 				bodyReader = errorReader{}
 			}
 
-			req := httptest.NewRequest(http.MethodPost, "/", bodyReader)
+			req := httptest.NewRequest(http.MethodPost, "/api/shorten", bodyReader)
 
 			if tt.input.host != "" {
 				req.Host = tt.input.host
@@ -147,7 +153,7 @@ func TestSnipEndpoint_post(t *testing.T) {
 
 			w := httptest.NewRecorder()
 
-			endpoint.post(w, req)
+			endpoint.createShortURLJSON(w, req)
 
 			require.Equal(t, tt.want.code, w.Code)
 			require.Equal(t, strings.TrimSpace(tt.want.body), strings.TrimSpace(w.Body.String()))
