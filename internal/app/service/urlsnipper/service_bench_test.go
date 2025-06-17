@@ -95,18 +95,18 @@ func BenchmarkGetURLs(b *testing.B) {
 	}
 }
 
-// func BenchmarkDeleteURLs(b *testing.B) {
-// 	deleteService := &deleteServiceMock{
-// 		DeleteFunc: func(userID string, ids []string) {
-// 			// Mock implementation does nothing
-// 		},
-// 	}
-// 	service := NewURLSnipperService(nil, nil, nil, deleteService, nil)
+func BenchmarkDeleteURLs(b *testing.B) {
+	deleteService := &deleteServiceMock{
+		DeleteFunc: func(userID string, ids []string) {
+			// Mock implementation does nothing
+		},
+	}
+	service := NewURLSnipperService(nil, nil, nil, deleteService, nil)
 
-// 	ids := []string{"id1", "id2", "id3"}
+	ids := []string{"id1", "id2", "id3"}
 
-// 	b.ResetTimer()
-// 	for i := 0; i < b.N; i++ {
-// 		service.DeleteURLs(context.Background(), ids)
-// 	}
-// }
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		service.DeleteURLs(context.Background(), ids)
+	}
+}

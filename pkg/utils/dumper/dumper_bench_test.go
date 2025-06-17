@@ -70,6 +70,7 @@ func BenchmarkDumper_ReadAll(b *testing.B) {
 			}
 		}()
 	}
+	b.StopTimer()
 
 	// Удаление файла после теста
 	if err := os.Remove("testfile.json"); err != nil {
