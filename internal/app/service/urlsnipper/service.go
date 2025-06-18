@@ -41,10 +41,12 @@ type dumper interface {
 	ReadAll() (chan dump.URLRecord, error)
 }
 
+//go:generate moq -out mock_logger_moq_test.go . logger
 type logger interface {
 	Errorf(string, ...interface{})
 }
 
+//go:generate moq -out mock_delete_service_moq_test.go . deleteService
 type deleteService interface {
 	Delete(userID string, input []string)
 }
