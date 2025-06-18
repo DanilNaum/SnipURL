@@ -41,10 +41,12 @@ type dumper interface {
 	ReadAll() (chan dump.URLRecord, error)
 }
 
+//go:generate moq -out mock_logger_moq_test.go . logger
 type logger interface {
 	Errorf(string, ...interface{})
 }
 
+//go:generate moq -out mock_delete_service_moq_test.go . deleteService
 type deleteService interface {
 	Delete(userID string, input []string)
 }
@@ -67,6 +69,17 @@ func NewURLSnipperService(storage urlStorage, hasher hasher, dumper dumper, dele
 	}
 }
 
+// SetURL creates a short URL from the given original URL. It attempts to generate a unique short URL ID
+// by hashing the URL. If a collision occurs (ErrConflict), it returns the conflicting ID. If generation fails after
+// _maxAttempts, it returns ErrFailedToGenerateID. On success, it stores the URL mapping and dumps the record.
+//
+// Parameters:
+//   - ctx: The context for the operation
+//   - url: The original URL to be shortened
+//
+// Returns:
+//   - string: The generated short URL ID on success, or empty string on failure
+//   - error: ErrConflict if ID exists, ErrFailedToGenerateID if generation fails, or nil on success
 func (s *urlSnipperService) SetURL(ctx context.Context, url string) (string, error) {
 
 	urlCopy := url
@@ -97,6 +110,17 @@ func (s *urlSnipperService) SetURL(ctx context.Context, url string) (string, err
 	return "", ErrFailedToGenerateID
 }
 
+// GetURL retrieves the original URL associated with the given short URL ID.
+// If the URL has been deleted, it returns ErrDeleted. For any other errors,
+// it wraps them with ErrFailedToGetURL.
+//
+// Parameters:
+//   - ctx: The context for the operation
+//   - id: The short URL ID to look up
+//
+// Returns:
+//   - string: The original URL if found, or empty string on failure
+//   - error: ErrDeleted if URL was deleted, wrapped error with ErrFailedToGetURL for other errors, or nil on success
 func (s *urlSnipperService) GetURL(ctx context.Context, id string) (string, error) {
 	url, err := s.storage.GetURL(ctx, id)
 	if err != nil {
@@ -111,6 +135,17 @@ func (s *urlSnipperService) GetURL(ctx context.Context, id string) (string, erro
 	return url, nil
 }
 
+// SetURLs creates multiple short URLs from the given array of original URLs in batch.
+// It generates unique short URL IDs by hashing each original URL, stores the URL mappings,
+// and dumps the records. If any operation fails, it returns an error.
+//
+// Parameters:
+//   - ctx: The context for the operation
+//   - urls: Array of SetURLsInput containing original URLs and correlation IDs
+//
+// Returns:
+//   - map[string]*SetURLsOutput: Map of correlation IDs to their corresponding short URL outputs
+//   - error: ErrFailedToGenerateID if not all URLs were inserted, storage error, or nil on success
 func (s *urlSnipperService) SetURLs(ctx context.Context, urls []*SetURLsInput) (map[string]*SetURLsOutput, error) {
 	output := make(map[string]*SetURLsOutput, len(urls))
 
@@ -154,6 +189,16 @@ func (s *urlSnipperService) SetURLs(ctx context.Context, urls []*SetURLsInput) (
 	return output, nil
 }
 
+// GetURLs retrieves all URLs stored in the system.
+// It returns a slice of URL objects containing both short and original URLs.
+// If there's an error retrieving URLs from storage, it returns the error.
+//
+// Parameters:
+//   - ctx: The context for the operation
+//
+// Returns:
+//   - []*URL: Slice of URL objects containing short and original URLs
+//   - error: Storage error or nil on success
 func (s *urlSnipperService) GetURLs(ctx context.Context) ([]*URL, error) {
 	urls, err := s.storage.GetURLs(ctx)
 	if err != nil {
@@ -172,6 +217,13 @@ func (s *urlSnipperService) GetURLs(ctx context.Context) ([]*URL, error) {
 
 var key = middlewares.Key{Key: "userID"}
 
+// DeleteURLs asynchronously deletes multiple URLs in batches.
+// It extracts the user ID from the context and processes URL deletions in batches of size defined by batchSize.
+// If the user ID cannot be extracted from the context, the operation is aborted.
+//
+// Parameters:
+//   - ctx: The context containing the user ID
+//   - ids: Slice of URL IDs to be deleted
 func (s *urlSnipperService) DeleteURLs(ctx context.Context, ids []string) {
 	userID, ok := ctx.Value(key).(string)
 	if !ok {

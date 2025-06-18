@@ -37,6 +37,10 @@ func NewMigrator(dsn string, migrationFolderPathOpt migrationFolderPathOpt) *mig
 	return mig
 }
 
+// Migrate executes database migrations using the configured migration path.
+// It opens a connection to the PostgreSQL database, sets up the migration driver,
+// and applies all pending migrations in the forward direction.
+// Returns an error if any step in the migration process fails.
 func (mig *migrator) Migrate() error {
 	db, err := sql.Open("postgres", mig.dsn)
 	if err != nil {

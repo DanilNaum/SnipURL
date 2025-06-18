@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	expectedNumberOfURLs = 20
+	expectedNumberOfURLs = 1000
 )
 
 var key = middlewares.Key{Key: "userID"}
