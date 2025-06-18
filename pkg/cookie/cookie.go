@@ -67,6 +67,11 @@ func NewCookieManager(secret []byte, opts ...opt) *cookieManager {
 		options: opt,
 	}
 }
+
+// Set creates a new cookie with the given value and sets it in the HTTP response.
+// The cookie value is signed using HMAC-SHA256 to ensure integrity.
+// The signature is base64 URL-encoded and appended to the value with a dot separator.
+// The cookie settings (name, path, secure, httpOnly, sameSite) are taken from the cookieManager options.
 func (c *cookieManager) Set(w http.ResponseWriter, value string) {
 
 	// Create signature for the encoded value
@@ -84,6 +89,14 @@ func (c *cookieManager) Set(w http.ResponseWriter, value string) {
 	http.SetCookie(w, cookie)
 }
 
+// Get retrieves and validates a cookie from the HTTP request.
+// It returns the cookie value and any error encountered.
+// The method performs the following steps:
+// 1. Retrieves the cookie by name from the request
+// 2. Returns ErrNoCookie if the cookie is not found
+// 3. Splits the cookie value into the actual value and signature parts
+// 4. Validates the signature using HMAC-SHA256
+// 5. Returns the original value if signature is valid
 func (c *cookieManager) Get(r *http.Request) (string, error) {
 	cookie, err := r.Cookie(c.options.name)
 	if err != nil {

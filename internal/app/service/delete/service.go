@@ -43,6 +43,12 @@ func NewDeleteService(ctx context.Context, storage urlStorage) *deleteService {
 	return d
 }
 
+// Delete adds a task to delete URLs with the specified IDs for a given user to the worker pool.
+// The deletion is performed asynchronously by worker goroutines.
+//
+// Parameters:
+//   - userID: the identifier of the user who owns the URLs
+//   - input: a slice of URL IDs to be deleted
 func (d *deleteService) Delete(userID string, input []string) {
 	d.workerPool.AddTask(&data{userID: userID, ids: input})
 }
