@@ -15,3 +15,12 @@ pprof:
 bench_coverage:
 	go test -benchmem  -cover -coverprofile="bench_coverage.out" ./... && \
 	go tool cover -html="./bench_coverage.out" -o "bench_coverage.html"
+
+multichecker_test:
+	go build -o multichecker  ./cmd/multichecker/main.go
+	./multichecker ./cmd/shortener/... 
+	@echo "Проверка ./cmd/shortener/... завершена успешно" 
+	./multichecker ./internal/... 
+	@echo "Проверка ./internal/...  завершена успешно" 
+	./multichecker ./pkg/... 
+	@echo "Проверка ./pkg/...  завершена успешно" 
