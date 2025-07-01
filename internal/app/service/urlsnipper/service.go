@@ -10,6 +10,8 @@ import (
 	dump "github.com/DanilNaum/SnipURL/pkg/utils/dumper"
 )
 
+// Predefined error variables for URL-related operations, providing specific error conditions
+// during URL generation, retrieval, storage, and deletion processes.
 var (
 	// ErrFailedToGenerateID indicates a failure in generating a unique URL identifier.
 	ErrFailedToGenerateID = fmt.Errorf("failed to generate id")

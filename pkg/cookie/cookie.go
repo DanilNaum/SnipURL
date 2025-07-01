@@ -9,9 +9,8 @@ import (
 	"strings"
 )
 
-var (
-	ErrNoCookie = errors.New("no cookie")
-)
+// ErrNoCookie is returned when no cookie is found during a lookup or retrieval operation.
+var ErrNoCookie = errors.New("no cookie")
 
 type cookieManager struct {
 	secret  []byte

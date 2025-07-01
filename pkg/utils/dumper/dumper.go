@@ -18,6 +18,8 @@ type dumper struct {
 	logger logger
 }
 
+// URLRecord represents a mapping between a unique identifier, a shortened URL, and its original URL.
+// It is used for storing and serializing URL shortening records with JSON tags for marshaling.
 type URLRecord struct {
 	UUID        int    `json:"uuid"`
 	ShortURL    string `json:"short_url"`

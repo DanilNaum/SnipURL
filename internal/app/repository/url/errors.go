@@ -2,6 +2,8 @@ package url
 
 import "errors"
 
+// Predefined errors used in the URL repository to represent various error conditions
+// when performing operations on URL resources.
 var (
 	// ErrNotFound indicates that the requested resource was not found
 	ErrNotFound = errors.New("not found")
