@@ -11,6 +11,9 @@ type logger interface {
 	Errorf(template string, args ...interface{})
 }
 
+// NewConnection establishes a new database connection pool using the provided context,
+// connection configuration, and logger. Returns a pgxpool.Pool instance on success,
+// or nil if the connection fails.
 func NewConnection(ctx context.Context, cnf *connConfig, log logger) *pgxpool.Pool {
 	masterDsn := cnf.getDsn()
 

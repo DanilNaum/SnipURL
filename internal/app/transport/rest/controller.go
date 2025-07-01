@@ -39,6 +39,19 @@ type cookieManager interface {
 	Get(r *http.Request) (string, error)
 }
 
+// NewController creates and configures a new HTTP handler with middleware, endpoints for URL shortening,
+// PostgreSQL ping, and pprof profiling. It sets up routes using the provided chi router and various
+// dependencies like configuration, service, storage pinger, cookie manager, and logger.
+//
+// Parameters:
+//   - mux: The base chi router to be configured
+//   - conf: Configuration interface for retrieving application settings
+//   - service: Service interface for URL shortening operations
+//   - psqlStoragePinger: Interface for checking PostgreSQL storage connectivity
+//   - cookieManager: Interface for managing HTTP cookies
+//   - logger: Logger interface for logging information
+//
+// Returns an configured HTTP handler and an error if initialization fails.
 func NewController(mux *chi.Mux, conf config, service service, psqlStoragePinger psqlStoragePinger, cookieManager cookieManager, logger logger) (http.Handler, error) {
 
 	middlewares := middlewares.NewMiddleware(logger, cookieManager)

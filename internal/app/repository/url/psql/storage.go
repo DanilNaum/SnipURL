@@ -25,12 +25,16 @@ type storage struct {
 	conn *pgxpool.Pool
 }
 
+// NewStorage creates a new storage instance with the provided database connection pool.
+// It returns a pointer to the storage struct.
 func NewStorage(conn *pgxpool.Pool) *storage {
 	return &storage{
 		conn: conn,
 	}
 }
 
+// Ping checks the database connection by attempting to ping the database.
+// Returns an error if the connection is nil or if the ping fails.
 func (s *storage) Ping(ctx context.Context) error {
 	if s.conn == nil {
 		return errors.New("connection is nil")
@@ -42,6 +46,9 @@ func (s *storage) Ping(ctx context.Context) error {
 	return nil
 }
 
+// SetURL inserts a new URL into the database or returns an existing URL's UUID if it already exists.
+// It associates the URL with a user ID from the context (if available).
+// Returns the UUID of the inserted or existing URL, with a special ErrConflict error for duplicate entries.
 func (s *storage) SetURL(ctx context.Context, id, url string) (int, error) {
 	userID, ok := ctx.Value(key).(string)
 	if !ok {
@@ -75,6 +82,8 @@ func (s *storage) SetURL(ctx context.Context, id, url string) (int, error) {
 	return uuid, nil
 }
 
+// GetURL retrieves the original URL for a given short URL ID.
+// Returns the original URL or an error if the URL is not found or has been deleted.
 func (s *storage) GetURL(ctx context.Context, id string) (string, error) {
 	query := `SELECT url, deleted FROM url WHERE id = $1`
 	var url string
@@ -94,6 +103,8 @@ func (s *storage) GetURL(ctx context.Context, id string) (string, error) {
 	return url, nil
 }
 
+// SetURLs batch inserts multiple URL records for a user.
+// Returns a slice of successfully inserted URL records.
 func (s *storage) SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (insertedURLs []*urlstorage.URLRecord, err error) {
 	userID, ok := ctx.Value(key).(string)
 	if !ok {
@@ -128,6 +139,8 @@ func (s *storage) SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (in
 	return insertedURLs, nil
 }
 
+// GetURLs retrieves all non-deleted URL records for a specific user.
+// Returns a slice of URL records associated with the user.
 func (s *storage) GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error) {
 	userID, ok := ctx.Value(key).(string)
 	if !ok {
@@ -161,8 +174,8 @@ func valuesForInsert(userID string, urlRecords []*urlstorage.URLRecord) []interf
 	return values
 }
 
+// DeleteURLs marks specified URL records as deleted for a given user.
 func (s *storage) DeleteURLs(userID string, ids []string) error {
-
 	query := `UPDATE url SET deleted = true WHERE id = ANY($1) AND user_uuid = $2`
 	_, err := s.conn.Exec(context.TODO(), query, ids, userID)
 	if err != nil {
