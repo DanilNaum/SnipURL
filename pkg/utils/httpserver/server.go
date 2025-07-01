@@ -17,6 +17,15 @@ type server struct {
 	shutdownTimeout time.Duration
 }
 
+// NewHTTPServer creates a new HTTP server with the given handler and optional configuration.
+// It sets up a server with default address and shutdown timeout, and allows customization
+// through optional configuration functions. The server is started immediately upon creation.
+//
+// Parameters:
+//   - handler: The HTTP handler to serve requests
+//   - opts: Optional configuration functions to modify server settings
+//
+// Returns a configured and started server instance.
 func NewHTTPServer(handler http.Handler, opts ...Option) *server {
 	httpServer := &http.Server{
 		Addr:    _defaultAddr,
@@ -51,10 +60,14 @@ func (s *server) start() {
 	}()
 }
 
+// Notify returns the error notification channel for the server.
+// This channel receives any non-ErrServerClosed errors that occur during server startup or operation.
 func (s *server) Notify() chan error {
 	return s.notify
 }
 
+// Shutdown gracefully stops the HTTP server, allowing active connections to complete
+// within the configured shutdown timeout. Returns an error if the shutdown fails.
 func (s *server) Shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), s.shutdownTimeout)
 	defer cancel()

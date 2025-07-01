@@ -12,6 +12,8 @@ type gzipWriter struct {
 	Writer io.Writer
 }
 
+// Write implements the io.Writer interface for gzipWriter, writing compressed data
+// using the underlying gzip writer to enable transparent gzip compression.
 func (w gzipWriter) Write(b []byte) (int, error) {
 	// w.Writer будет отвечать за gzip-сжатие, поэтому пишем в него
 	return w.Writer.Write(b)

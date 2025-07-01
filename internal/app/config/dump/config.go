@@ -15,6 +15,8 @@ type dumpConfig struct {
 	Path *string `env:"FILE_STORAGE_PATH"`
 }
 
+// DumpConfigFromFlags creates a dumpConfig with a default storage path from command-line flags.
+// It sets the default dump file path to "storage.json" if not specified.
 func DumpConfigFromFlags() *dumpConfig {
 	path := flag.String("f", "storage.json", "path to dump file")
 	return &dumpConfig{
@@ -22,6 +24,8 @@ func DumpConfigFromFlags() *dumpConfig {
 	}
 }
 
+// DumpConfigFromEnv parses environment variables to configure the dump configuration.
+// It logs a fatal error if parsing the environment configuration fails.
 func DumpConfigFromEnv(log logger) *dumpConfig {
 	c := &dumpConfig{}
 	err := env.Parse(c)
@@ -31,6 +35,9 @@ func DumpConfigFromEnv(log logger) *dumpConfig {
 	return c
 }
 
+// MergeDumpConfigs combines environment and flag-based configurations for dump settings.
+// It prioritizes environment configuration and uses flag configuration as a fallback.
+// Logs a fatal error if either configuration is nil.
 func MergeDumpConfigs(envConfig, flagsConfig *dumpConfig, log logger) *dumpConfig {
 	if envConfig == nil {
 		log.Fatalf("error env config is nil")
@@ -49,6 +56,8 @@ func MergeDumpConfigs(envConfig, flagsConfig *dumpConfig, log logger) *dumpConfi
 	return envConfig
 }
 
+// GetPath returns the configured file storage path.
+// Returns an empty string if no path is set.
 func (c *dumpConfig) GetPath() string {
 	return *c.Path
 }

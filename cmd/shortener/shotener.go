@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"os"
+	"log"
 	"os/signal"
 	"syscall"
 
@@ -20,20 +20,19 @@ import (
 	"github.com/DanilNaum/SnipURL/pkg/utils/httpserver"
 	"github.com/go-chi/chi/v5"
 
+	_ "net/http/pprof"
+
 	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
 	deleteurl "github.com/DanilNaum/SnipURL/internal/app/service/delete"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
-	_ "net/http/pprof"
 )
 
 func main() {
 	logger, err := zap.NewDevelopment()
 	if err != nil {
-		os.Exit(1)
+		log.Fatalf("error create logger %s", err.Error())
 	}
-
-	defer logger.Sync()
 
 	sugarLogger := logger.Sugar()
 
@@ -42,11 +41,13 @@ func main() {
 	err = run(sugarLogger)
 
 	if err != nil && !errors.Is(err, context.Canceled) {
+		logger.Sync()
 		sugarLogger.Fatalf("App fail with error %s", err.Error())
 	}
 
 	sugarLogger.Info("App is gracefully shutdown")
-	os.Exit(0)
+	logger.Sync()
+
 }
 
 func run(log *zap.SugaredLogger) error {
@@ -66,7 +67,7 @@ func run(log *zap.SugaredLogger) error {
 
 	if conf.DBConfig().GetDSN() != "" {
 		migrator := migration.NewMigrator(conf.DBConfig().GetDSN(), migration.WithRelativePath("migrations"))
-		err := migrator.Migrate()
+		err = migrator.Migrate()
 		if err != nil {
 			return err
 		}
@@ -82,7 +83,7 @@ func run(log *zap.SugaredLogger) error {
 	} else {
 		storage := memory.NewStorage()
 
-		err := storage.RestoreStorage(dump)
+		err = storage.RestoreStorage(dump)
 		if err != nil {
 			return err
 		}
@@ -110,13 +111,13 @@ func run(log *zap.SugaredLogger) error {
 	httpServer := httpserver.NewHTTPServer(controller, httpserver.WithAddr(conf.ServerConfig().HTTPServerHost()))
 
 	services.Go(func() error {
-		err := <-httpServer.Notify()
+		err = <-httpServer.Notify()
 		return err
 	})
 
 	go func() {
 		<-ctx.Done()
-		err := httpServer.Shutdown()
+		err = httpServer.Shutdown()
 		if err != nil {
 			log.Errorf("shutdown error: %s", err)
 		}

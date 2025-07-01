@@ -2,6 +2,8 @@ package url
 
 import "context"
 
+// URLStorage defines the interface for URL storage operations.
+// It provides methods for managing and retrieving URL records.
 type URLStorage interface {
 	Ping(ctx context.Context) error
 	GetURL(ctx context.Context, id string) (string, error)

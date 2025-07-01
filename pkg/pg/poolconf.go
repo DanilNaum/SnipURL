@@ -13,6 +13,8 @@ type connConfig struct {
 	dncString string
 }
 
+// NewConnConfig creates a new connConfig instance with the provided connection parameters.
+// It allows creating a connection configuration by specifying host, port, username, password, and database name.
 func NewConnConfig(host, port, username, password, dbName string) *connConfig {
 	return &connConfig{
 		host:     host,
@@ -23,6 +25,8 @@ func NewConnConfig(host, port, username, password, dbName string) *connConfig {
 	}
 }
 
+// NewConnConfigFromDsnString creates a new connConfig instance using a pre-existing DSN connection string.
+// It allows creating a connection configuration directly from a fully formed data source name string.
 func NewConnConfigFromDsnString(dnsString string) *connConfig {
 	return &connConfig{
 		dncString: dnsString,
