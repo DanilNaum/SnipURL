@@ -11,6 +11,21 @@ import (
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 )
 
+// createShortURLJSON handles HTTP POST requests to create a shortened URL.
+// It accepts a JSON request containing the original URL and returns a JSON response
+// with the shortened URL.
+//
+// The method:
+// 1. Reads and unmarshals the JSON request body
+// 2. Calls the URL shortening service to generate a unique ID
+// 3. Constructs the full shortened URL using the base URL and generated ID
+// 4. Returns the result as a JSON response
+//
+// Response status codes:
+//   - 201 Created: URL successfully shortened
+//   - 400 Bad Request: Invalid JSON request
+//   - 409 Conflict: URL already exists
+//   - 500 Internal Server Error: Server-side error
 func (s *snipEndpoint) createShortURLJSON(w http.ResponseWriter, r *http.Request) {
 	var req createShortURLJSONRequest
 	var buf bytes.Buffer

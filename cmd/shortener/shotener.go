@@ -24,6 +24,7 @@ import (
 	deleteurl "github.com/DanilNaum/SnipURL/internal/app/service/delete"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+	_ "net/http/pprof"
 )
 
 func main() {

@@ -33,7 +33,7 @@ func TestStorage_SetURL(t *testing.T) {
 			},
 
 			storageStateAfter: map[string]*urlstorage.URLRecord{
-				"abc123": &urlstorage.URLRecord{OriginalURL: "https://example.com"},
+				"abc123": {OriginalURL: "https://example.com"},
 			},
 
 			wantErr: nil,
@@ -42,7 +42,7 @@ func TestStorage_SetURL(t *testing.T) {
 			name: "success_same_url",
 
 			startStorageState: map[string]*urlstorage.URLRecord{
-				"abc123": &urlstorage.URLRecord{OriginalURL: "https://example.com"},
+				"abc123": {OriginalURL: "https://example.com"},
 			},
 
 			args: args{
@@ -51,7 +51,7 @@ func TestStorage_SetURL(t *testing.T) {
 			},
 
 			storageStateAfter: map[string]*urlstorage.URLRecord{
-				"abc123": &urlstorage.URLRecord{OriginalURL: "https://example.com"},
+				"abc123": {OriginalURL: "https://example.com"},
 			},
 			wantErr: urlstorage.ErrConflict,
 		},
@@ -59,7 +59,7 @@ func TestStorage_SetURL(t *testing.T) {
 			name: "error_id_busy",
 
 			startStorageState: map[string]*urlstorage.URLRecord{
-				"abc123": &urlstorage.URLRecord{OriginalURL: "https://example.com"},
+				"abc123": {OriginalURL: "https://example.com"},
 			},
 
 			args: args{
@@ -68,7 +68,7 @@ func TestStorage_SetURL(t *testing.T) {
 			},
 
 			storageStateAfter: map[string]*urlstorage.URLRecord{
-				"abc123": &urlstorage.URLRecord{OriginalURL: "https://example.com"},
+				"abc123": {OriginalURL: "https://example.com"},
 			},
 			wantErr: urlstorage.ErrIDIsBusy,
 		},
