@@ -15,6 +15,8 @@ type dbConfig struct {
 	DBDSN *string `env:"DATABASE_DSN"`
 }
 
+// DBConfigFromFlags creates a database configuration from command-line flags.
+// It returns a dbConfig with a DSN (Data Source Name) parsed from the -d flag.
 func DBConfigFromFlags() *dbConfig {
 	dsn := flag.String("d", "", "dsn")
 
@@ -23,6 +25,8 @@ func DBConfigFromFlags() *dbConfig {
 	}
 }
 
+// DBConfigFromEnv creates a database configuration by parsing environment variables.
+// It uses the env package to populate the configuration and logs a fatal error if parsing fails.
 func DBConfigFromEnv(log logger) *dbConfig {
 	c := &dbConfig{}
 	err := env.Parse(c)
@@ -32,6 +36,9 @@ func DBConfigFromEnv(log logger) *dbConfig {
 	return c
 }
 
+// MergeDBConfigs combines database configurations from environment and flags.
+// If either configuration is nil, it logs a fatal error.
+// It prioritizes the environment configuration, using flag configuration as a fallback for DSN.
 func MergeDBConfigs(envConfig, flagsConfig *dbConfig, log logger) *dbConfig {
 	if envConfig == nil {
 		log.Fatalf("error env config is nil")
@@ -50,6 +57,8 @@ func MergeDBConfigs(envConfig, flagsConfig *dbConfig, log logger) *dbConfig {
 	return envConfig
 }
 
+// GetDSN returns the Data Source Name (DSN) from the database configuration.
+// It returns an empty string if no DSN is set.
 func (c *dbConfig) GetDSN() string {
 	return *c.DBDSN
 }

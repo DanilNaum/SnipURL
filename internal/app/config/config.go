@@ -37,6 +37,10 @@ type config struct {
 	cookieConfig cookieConfig
 }
 
+// NewConfig creates a new configuration by merging configuration values from flags, environment variables, and applying default settings.
+// It takes a logger as a parameter to handle potential configuration errors.
+// The function parses command-line flags and combines configurations for server, dump, database, and cookie settings.
+// Returns a fully initialized config struct with merged configuration values.
 func NewConfig(log logger) *config {
 	dbConfigFlag := db.DBConfigFromFlags()
 	dumpConfigFlags := dump.DumpConfigFromFlags()
@@ -61,18 +65,26 @@ func NewConfig(log logger) *config {
 	}
 }
 
+// ServerConfig returns the server configuration for the current config instance.
+// It provides access to the serverConfig field, which contains server-related settings.
 func (c *config) ServerConfig() serverConfig {
 	return c.serverConfig
 }
 
+// DumpConfig returns the dump configuration for the current config instance.
+// It provides access to the dumpConfig field, which contains dump-related settings.
 func (c *config) DumpConfig() dumpConfig {
 	return c.dumpConfig
 }
 
+// DBConfig returns the database configuration for the current config instance.
+// It provides access to the dbConfig field, which contains database-related settings.
 func (c *config) DBConfig() dbConfig {
 	return c.dbConfig
 }
 
+// CookieConfig returns the cookie configuration for the current config instance.
+// It provides access to the cookieConfig field, which contains cookie-related settings.
 func (c *config) CookieConfig() cookieConfig {
 	return c.cookieConfig
 }

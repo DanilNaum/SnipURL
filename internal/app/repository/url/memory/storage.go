@@ -25,15 +25,23 @@ type storage struct {
 	urls map[string]*urlstorage.URLRecord
 }
 
+// NewStorage creates and returns a new in-memory storage for URL records.
+// It initializes an empty map to store URL records with thread-safe access.
 func NewStorage() *storage {
 	return &storage{
 		urls: make(map[string]*urlstorage.URLRecord),
 	}
 }
 
+// Ping checks the availability of the storage service.
+// Currently returns a "not implemented" error.
+// Implements the urlstorage.Repository interface.
 func (s *storage) Ping(ctx context.Context) error {
 	return errors.New("not implemented")
 }
+
+// SetURL adds a new URL record to the in-memory storage with thread-safe synchronization.
+// It locks the mutex, calls the internal setURL method, and returns the total number of URLs or an error.
 func (s *storage) SetURL(ctx context.Context, id, url string) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -62,6 +70,9 @@ func (s *storage) setURL(ctx context.Context, id, url string) (int, error) {
 	return len(s.urls), nil
 }
 
+// GetURL retrieves the original URL for a given short URL ID.
+// It uses a read lock to ensure thread-safe access to the in-memory storage.
+// Returns the original URL if found, or an error if the URL is not found or has been deleted.
 func (s *storage) GetURL(_ context.Context, id string) (string, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -77,6 +88,9 @@ func (s *storage) GetURL(_ context.Context, id string) (string, error) {
 
 }
 
+// RestoreStorage populates the in-memory storage with URL records from a dumper.
+// It reads all records and attempts to set them in the storage,
+// returning an error if any record fails to be added.
 func (s *storage) RestoreStorage(dumper dumper) error {
 	records, err := dumper.ReadAll()
 	if err != nil {
@@ -92,6 +106,9 @@ func (s *storage) RestoreStorage(dumper dumper) error {
 	return nil
 }
 
+// SetURLs adds multiple URL records to the storage.
+// It attempts to insert each URL, skipping URLs that would cause ID conflicts.
+// Returns a slice of successfully inserted URLs and any error encountered during insertion.
 func (s *storage) SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (insertedURLs []*urlstorage.URLRecord, err error) {
 	inserted := make([]*urlstorage.URLRecord, 0, len(urls))
 	s.mu.Lock()
@@ -111,6 +128,9 @@ func (s *storage) SetURLs(ctx context.Context, urls []*urlstorage.URLRecord) (in
 	return inserted, nil
 }
 
+// GetURLs retrieves all non-deleted URL records for a specific user.
+// Requires a user ID in the context. Returns an error if no user ID is found.
+// Returns a slice of URL records belonging to the user.
 func (s *storage) GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error) {
 	userID, ok := ctx.Value(key).(string)
 	if !ok {
@@ -129,6 +149,9 @@ func (s *storage) GetURLs(ctx context.Context) ([]*urlstorage.URLRecord, error) 
 	return urls, nil
 }
 
+// DeleteURLs marks specified URL records as deleted for a given user.
+// Only deletes URLs that belong to the specified user.
+// Silently skips URLs that do not exist or belong to a different user.
 func (s *storage) DeleteURLs(userID string, ids []string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

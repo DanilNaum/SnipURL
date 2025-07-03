@@ -19,6 +19,9 @@ type serverConfig struct {
 	BaseURL *string `env:"BASE_URL"`
 }
 
+// ServerConfigFromFlags parses command-line flags to configure server settings.
+// It defines flags for host address and base URL with default values, and returns a serverConfig.
+// The host flag defaults to "localhost:8080" and the base URL flag defaults to "http://localhost:8080".
 func ServerConfigFromFlags() *serverConfig {
 	host := flag.String("a", "localhost:8080", "host:port")
 
@@ -30,6 +33,10 @@ func ServerConfigFromFlags() *serverConfig {
 	}
 }
 
+// ServerConfigFromEnv parses server configuration from environment variables.
+// It uses the env package to populate a serverConfig struct with values from the environment.
+// If parsing fails, it logs a fatal error with the parsing error details.
+// Returns the parsed server configuration or nil if parsing fails.
 func ServerConfigFromEnv(log logger) *serverConfig {
 	c := &serverConfig{}
 	err := env.Parse(c)
@@ -39,6 +46,9 @@ func ServerConfigFromEnv(log logger) *serverConfig {
 	return c
 }
 
+// MergeServerConfigs merges two serverConfig objects, prioritizing non-nil values from envConfig.
+// Logs a fatal error if either config is nil.
+// Returns the merged serverConfig.
 func MergeServerConfigs(envConfig, flagsConfig *serverConfig, log logger) *serverConfig {
 	if envConfig == nil {
 		log.Fatalf("error env config is nil")
@@ -61,6 +71,9 @@ func MergeServerConfigs(envConfig, flagsConfig *serverConfig, log logger) *serve
 	return envConfig
 }
 
+// ValidateServerConfig checks the server configuration for valid host and base URL values.
+// It ensures the host and base URL are properly formatted, the base URL uses http or https,
+// and that the base URL contains the host. Logs a fatal error if any validation fails.
 func (c *serverConfig) ValidateServerConfig(log logger) {
 
 	_, err := url.Parse(*c.Host)
@@ -85,14 +98,21 @@ func (c *serverConfig) ValidateServerConfig(log logger) {
 
 }
 
+// HTTPServerHost returns the HTTP server host address from the serverConfig.
+// It dereferences the Host field pointer and returns its value.
 func (c *serverConfig) HTTPServerHost() string {
 	return *c.Host
 }
 
+// GetBaseURL returns the base URL from the serverConfig.
+// It dereferences the BaseURL field pointer and returns its value.
 func (c *serverConfig) GetBaseURL() string {
 	return *c.BaseURL
 }
 
+// GetPrefix extracts and returns the path prefix from the base URL.
+// If the base URL has no path, it returns "/". If parsing fails, it returns an error.
+// The returned path is trimmed of any trailing slash.
 func (c *serverConfig) GetPrefix() (string, error) {
 	parsedURL, err := url.Parse(*c.BaseURL)
 	if err != nil {

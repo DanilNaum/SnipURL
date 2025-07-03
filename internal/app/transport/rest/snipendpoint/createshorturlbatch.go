@@ -48,8 +48,8 @@ func (s *snipEndpoint) createShortURLBatch(w http.ResponseWriter, r *http.Reques
 
 	resp := make([]*createShortURLBatchJSONResponse, 0, len(res))
 	for _, r := range res {
-		shortURL, err := url.JoinPath(s.baseURL, r.ShortURLID)
-		if err != nil {
+		shortURL, errJoinPath := url.JoinPath(s.baseURL, r.ShortURLID)
+		if errJoinPath != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}

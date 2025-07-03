@@ -20,6 +20,7 @@ type middleware struct {
 	cookieManager cookieManager
 }
 
+// NewMiddleware creates a new middleware instance with the provided logger and cookie manager.
 func NewMiddleware(logger logger, cookieManager cookieManager) *middleware {
 	return &middleware{
 		logger:        logger,
@@ -27,8 +28,9 @@ func NewMiddleware(logger logger, cookieManager cookieManager) *middleware {
 	}
 }
 
+// Register configures and applies middleware to the given chi router.
+// It adds authentication, logging, gzip compression, and decompression middleware.
 func (m *middleware) Register(mux *chi.Mux) *chi.Mux {
-
 	mux.Use(m.authentication)
 	mux.Use(m.logging)
 

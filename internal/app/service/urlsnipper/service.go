@@ -10,11 +10,20 @@ import (
 	dump "github.com/DanilNaum/SnipURL/pkg/utils/dumper"
 )
 
+// Predefined error variables for URL-related operations, providing specific error conditions
+// during URL generation, retrieval, storage, and deletion processes.
 var (
+	// ErrFailedToGenerateID indicates a failure in generating a unique URL identifier.
 	ErrFailedToGenerateID = fmt.Errorf("failed to generate id")
-	ErrFailedToGetURL     = fmt.Errorf("failed to get url")
-	ErrConflict           = fmt.Errorf("conflict")
-	ErrDeleted            = fmt.Errorf("deleted")
+
+	// ErrFailedToGetURL indicates a failure in retrieving a URL from storage.
+	ErrFailedToGetURL = fmt.Errorf("failed to get url")
+
+	// ErrConflict represents a conflict during URL storage or retrieval.
+	ErrConflict = fmt.Errorf("conflict")
+
+	// ErrDeleted indicates that the requested URL has been deleted.
+	ErrDeleted = fmt.Errorf("deleted")
 )
 
 const (
@@ -59,6 +68,18 @@ type urlSnipperService struct {
 	deleteService deleteService
 }
 
+// NewURLSnipperService creates and returns a new instance of urlSnipperService with the provided dependencies.
+// It initializes a URL snipper service with storage, hashing, dumping, deletion, and logging capabilities.
+//
+// Parameters:
+//   - storage: Implementation of URL storage interface
+//   - hasher: Hash generator for creating short URL IDs
+//   - dumper: URL record dumper
+//   - deleteService: Service for handling URL deletions
+//   - logger: Logger for recording errors
+//
+// Returns:
+//   - *urlSnipperService: Configured URL snipper service instance
 func NewURLSnipperService(storage urlStorage, hasher hasher, dumper dumper, deleteService deleteService, logger logger) *urlSnipperService {
 	return &urlSnipperService{
 		storage:       storage,
