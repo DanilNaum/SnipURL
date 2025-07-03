@@ -28,6 +28,12 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+var (
+	buildVersion string = "N/A"
+	buildDate    string = "N/A"
+	buildCommit  string = "N/A"
+)
+
 func main() {
 	logger, err := zap.NewDevelopment()
 	if err != nil {
@@ -36,7 +42,7 @@ func main() {
 
 	sugarLogger := logger.Sugar()
 
-	sugarLogger.Info("App is running...")
+	sugarLogger.Info("Build version: ", buildVersion, "\nBuild date: ", buildDate, "\nBuild commit: ", buildCommit)
 
 	err = run(sugarLogger)
 
