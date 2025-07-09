@@ -28,12 +28,12 @@ func ServerConfigFromFlags() *serverConfig {
 
 	baseURL := flag.String("b", "http://localhost:8080", "base url")
 
-	enableHTTPs := flag.Bool("s", false, "enable HTTPs")
+	enableHTTPS := flag.Bool("s", false, "enable HTTPS")
 
 	return &serverConfig{
 		Host:        host,
 		BaseURL:     baseURL,
-		EnableHTTPS: enableHTTPs,
+		EnableHTTPS: enableHTTPS,
 	}
 }
 
