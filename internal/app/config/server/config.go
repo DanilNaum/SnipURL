@@ -15,8 +15,9 @@ type logger interface {
 }
 
 type serverConfig struct {
-	Host    *string `env:"SERVER_ADDRESS"`
-	BaseURL *string `env:"BASE_URL"`
+	Host        *string `env:"SERVER_ADDRESS"`
+	BaseURL     *string `env:"BASE_URL"`
+	EnableHTTPs *bool   `env:"ENABLE_HTTPS"`
 }
 
 // ServerConfigFromFlags parses command-line flags to configure server settings.
@@ -27,9 +28,12 @@ func ServerConfigFromFlags() *serverConfig {
 
 	baseURL := flag.String("b", "http://localhost:8080", "base url")
 
+	enableHTTPs := flag.Bool("s", false, "enable HTTPs")
+
 	return &serverConfig{
-		Host:    host,
-		BaseURL: baseURL,
+		Host:        host,
+		BaseURL:     baseURL,
+		EnableHTTPs: enableHTTPs,
 	}
 }
 
@@ -68,6 +72,9 @@ func MergeServerConfigs(envConfig, flagsConfig *serverConfig, log logger) *serve
 		envConfig.BaseURL = flagsConfig.BaseURL
 	}
 
+	if envConfig.EnableHTTPs == nil {
+		envConfig.EnableHTTPs = flagsConfig.EnableHTTPs
+	}
 	return envConfig
 }
 
@@ -108,6 +115,11 @@ func (c *serverConfig) HTTPServerHost() string {
 // It dereferences the BaseURL field pointer and returns its value.
 func (c *serverConfig) GetBaseURL() string {
 	return *c.BaseURL
+}
+
+// GetEnableHTTPs returns the value of the EnableHTTPs field indicating if HTTPS is enabled.
+func (c *serverConfig) GetEnableHTTPs() bool {
+	return *c.EnableHTTPs
 }
 
 // GetPrefix extracts and returns the path prefix from the base URL.

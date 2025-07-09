@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"context"
+	"golang.org/x/crypto/acme/autocert"
 	"net/http"
 	"time"
 )
@@ -12,6 +13,7 @@ const (
 )
 
 type server struct {
+	tls             bool
 	server          *http.Server
 	notify          chan error
 	shutdownTimeout time.Duration
@@ -50,7 +52,21 @@ func NewHTTPServer(handler http.Handler, opts ...Option) *server {
 
 func (s *server) start() {
 	go func() {
-		err := s.server.ListenAndServe()
+		var err error
+		if s.tls {
+			manager := &autocert.Manager{
+				// директория для хранения сертификатов
+				Cache: autocert.DirCache("cache-dir"),
+				// функция, принимающая Terms of Service издателя сертификатов
+				Prompt: autocert.AcceptTOS,
+				// перечень доменов, для которых будут поддерживаться сертификаты
+				HostPolicy: autocert.HostWhitelist("*"),
+			}
+			s.server.TLSConfig = manager.TLSConfig()
+			err = s.server.ListenAndServeTLS("", "")
+		} else {
+			err = s.server.ListenAndServe()
+		}
 		if err != nil {
 			if err != http.ErrServerClosed {
 				s.notify <- err
