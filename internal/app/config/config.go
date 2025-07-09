@@ -17,7 +17,7 @@ type serverConfig interface {
 	HTTPServerHost() string
 	GetBaseURL() string
 	GetPrefix() (string, error)
-	GetEnableHTTPs() bool
+	GetEnableHTTPS() bool
 }
 
 type dumpConfig interface {

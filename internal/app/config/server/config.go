@@ -17,7 +17,7 @@ type logger interface {
 type serverConfig struct {
 	Host        *string `env:"SERVER_ADDRESS"`
 	BaseURL     *string `env:"BASE_URL"`
-	EnableHTTPs *bool   `env:"ENABLE_HTTPS"`
+	EnableHTTPS *bool   `env:"ENABLE_HTTPS"`
 }
 
 // ServerConfigFromFlags parses command-line flags to configure server settings.
@@ -33,7 +33,7 @@ func ServerConfigFromFlags() *serverConfig {
 	return &serverConfig{
 		Host:        host,
 		BaseURL:     baseURL,
-		EnableHTTPs: enableHTTPs,
+		EnableHTTPS: enableHTTPs,
 	}
 }
 
@@ -72,8 +72,8 @@ func MergeServerConfigs(envConfig, flagsConfig *serverConfig, log logger) *serve
 		envConfig.BaseURL = flagsConfig.BaseURL
 	}
 
-	if envConfig.EnableHTTPs == nil {
-		envConfig.EnableHTTPs = flagsConfig.EnableHTTPs
+	if envConfig.EnableHTTPS == nil {
+		envConfig.EnableHTTPS = flagsConfig.EnableHTTPS
 	}
 	return envConfig
 }
@@ -118,8 +118,8 @@ func (c *serverConfig) GetBaseURL() string {
 }
 
 // GetEnableHTTPs returns the value of the EnableHTTPs field indicating if HTTPS is enabled.
-func (c *serverConfig) GetEnableHTTPs() bool {
-	return *c.EnableHTTPs
+func (c *serverConfig) GetEnableHTTPS() bool {
+	return *c.EnableHTTPS
 }
 
 // GetPrefix extracts and returns the path prefix from the base URL.

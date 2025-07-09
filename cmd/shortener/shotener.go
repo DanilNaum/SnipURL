@@ -114,7 +114,7 @@ func run(log *zap.SugaredLogger) error {
 		return err
 	}
 
-	httpServer := httpserver.NewHTTPServer(controller, httpserver.WithAddr(conf.ServerConfig().HTTPServerHost()), httpserver.WithTLS(conf.ServerConfig().GetEnableHTTPs()))
+	httpServer := httpserver.NewHTTPServer(controller, httpserver.WithAddr(conf.ServerConfig().HTTPServerHost()), httpserver.WithTLS(conf.ServerConfig().GetEnableHTTPS()))
 
 	services.Go(func() error {
 		err = <-httpServer.Notify()
