@@ -19,12 +19,16 @@ type psqlPingEndpoint struct {
 	psqlStoragePinger psqlStoragePinger
 }
 
+// NewPsqlPingEndpoint creates a new psqlPingEndpoint with the provided psqlStoragePinger.
+// It returns a configured endpoint for performing PostgreSQL ping operations.
 func NewPsqlPingEndpoint(psqlStoragePinger psqlStoragePinger) *psqlPingEndpoint {
 	return &psqlPingEndpoint{
 		psqlStoragePinger: psqlStoragePinger,
 	}
 }
 
+// Register adds the ping endpoint to the provided chi router,
+// mapping the GET /ping route to the ping handler method.
 func (l *psqlPingEndpoint) Register(r *chi.Mux) {
 	r.Get(endpointPing, l.ping)
 }

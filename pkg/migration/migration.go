@@ -16,18 +16,27 @@ type migrator struct {
 
 type migrationFolderPathOpt func() string
 
+// WithAbsolutePath returns a migrationFolderPathOpt function that converts an absolute file path
+// to a file URL scheme for use with database migration sources. It prepends "file:///"
+// to the provided path, ensuring compatibility with the golang-migrate library's file source.
 func WithAbsolutePath(path string) migrationFolderPathOpt {
 	return func() string {
 		return "file:///" + path
 	}
 }
 
+// WithRelativePath returns a migrationFolderPathOpt function that converts a relative file path
+// to a file URL scheme for use with database migration sources. It prepends "file://"
+// to the provided path, ensuring compatibility with the golang-migrate library's file source.
 func WithRelativePath(path string) migrationFolderPathOpt {
 	return func() string {
 		return "file://" + path
 	}
 }
 
+// NewMigrator creates and returns a new migrator instance configured with the provided database connection string
+// and migration folder path. It sets up the migration configuration with a default database name of "postgres".
+// The migrationFolderPathOpt allows specifying the migration source path using either absolute or relative path options.
 func NewMigrator(dsn string, migrationFolderPathOpt migrationFolderPathOpt) *migrator {
 	mig := &migrator{
 		migrationFolderPath: migrationFolderPathOpt(),

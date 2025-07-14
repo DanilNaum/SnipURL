@@ -36,6 +36,9 @@ type snipEndpoint struct {
 	baseURL string
 }
 
+// NewSnipEndpoint creates a new snipEndpoint instance with the provided service and configuration.
+// It retrieves the prefix from the configuration and initializes the endpoint with the service,
+// prefix, and base URL. Returns an error if prefix retrieval fails.
 func NewSnipEndpoint(service service, conf config) (*snipEndpoint, error) {
 	prefix, err := conf.GetPrefix()
 	if err != nil {
@@ -48,6 +51,14 @@ func NewSnipEndpoint(service service, conf config) (*snipEndpoint, error) {
 	}, nil
 }
 
+// Register sets up the routing for the snipEndpoint with various HTTP endpoints
+// for creating, retrieving, and managing short URLs. It configures routes for:
+// - Creating a short URL via POST
+// - Retrieving a URL by its short ID via GET
+// - Creating a short URL via JSON POST
+// - Batch creating short URLs
+// - Retrieving user's URLs
+// - Deleting user's URLs
 func (s *snipEndpoint) Register(r *chi.Mux) {
 	r.Route(s.prefix, func(r chi.Router) {
 		r.Post(endpointCreateShortURL, s.createShortURL)

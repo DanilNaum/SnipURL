@@ -9,9 +9,8 @@ import (
 	"strings"
 )
 
-var (
-	ErrNoCookie = errors.New("no cookie")
-)
+// ErrNoCookie is returned when no cookie is found during a lookup or retrieval operation.
+var ErrNoCookie = errors.New("no cookie")
 
 type cookieManager struct {
 	secret  []byte
@@ -26,31 +25,46 @@ type options struct {
 }
 type opt func(o *options)
 
+// WithName sets the name of the cookie. Defaults to "user" if not specified.
 func WithName(name string) opt {
 	return func(o *options) {
 		o.name = name
 	}
 }
+
+// WithPath sets the path for the cookie. Defaults to "/" if not specified.
 func WithPath(path string) opt {
 	return func(o *options) {
 		o.path = path
 	}
 }
+
+// WithSecure sets whether the cookie should only be transmitted over secure connections.
+// Defaults to false if not specified.
 func WithSecure(secure bool) opt {
 	return func(o *options) {
 		o.secure = secure
 	}
 }
+
+// WithHTTPOnly sets whether the cookie is inaccessible to client-side scripts.
+// Defaults to false if not specified.
 func WithHTTPOnly(httpOnly bool) opt {
 	return func(o *options) {
 		o.httpOnly = httpOnly
 	}
 }
+
+// WithSameSite sets the SameSite attribute of the cookie to control cross-site request behavior.
+// Defaults to http.SameSiteLaxMode if not specified.
 func WithSameSite(sameSite http.SameSite) opt {
 	return func(o *options) {
 		o.sameSite = sameSite
 	}
 }
+
+// NewCookieManager creates a new cookie manager with the given secret and optional configuration.
+// It allows customization of cookie settings such as name, path, security, and same-site policy.
 func NewCookieManager(secret []byte, opts ...opt) *cookieManager {
 	opt := &options{
 		name:     "user",

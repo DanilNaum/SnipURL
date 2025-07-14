@@ -23,10 +23,14 @@ func newCompressReader(r io.ReadCloser) (*compressReader, error) {
 	}, nil
 }
 
+// Read implements the io.Reader interface for the compressReader, reading decompressed data from the gzip reader.
+// It reads into the provided byte slice and returns the number of bytes read and any error encountered.
 func (c compressReader) Read(p []byte) (n int, err error) {
 	return c.zr.Read(p)
 }
 
+// Close closes both the underlying reader and the gzip reader, ensuring proper resource cleanup.
+// It returns an error if closing either reader fails.
 func (c *compressReader) Close() error {
 	if err := c.r.Close(); err != nil {
 		return err

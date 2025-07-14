@@ -31,6 +31,16 @@ type deleteService struct {
 	workerPool workerPool
 }
 
+// NewDeleteService creates a new delete service with a worker pool for asynchronous URL deletion.
+// It initializes a channel for tasks, sets up a worker pool with the specified number of workers,
+// and returns a configured delete service instance.
+//
+// Parameters:
+//   - ctx: the context for managing worker pool lifecycle
+//   - storage: the URL storage interface for performing deletion operations
+//
+// Returns:
+//   - *deleteService: a configured delete service ready to process deletion tasks
 func NewDeleteService(ctx context.Context, storage urlStorage) *deleteService {
 	input := make(chan *data, workerNum)
 

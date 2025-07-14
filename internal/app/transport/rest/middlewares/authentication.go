@@ -9,6 +9,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// Key is a custom type used to store and retrieve a user identifier in a context.
+// It provides a type-safe way to set and access a user ID value in request contexts.
 type Key struct {
 	Key string
 }
