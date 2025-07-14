@@ -6,6 +6,8 @@ import (
 	"os"
 )
 
+// LoadConfigFromFile reads a JSON configuration file specified by filename and unmarshals its contents into the provided config struct pointer.
+// Returns an error if the file cannot be read or if the JSON is invalid.
 func LoadConfigFromFile[T any](filename string, config *T) error {
 	file, err := os.ReadFile(filename)
 	if err != nil {
