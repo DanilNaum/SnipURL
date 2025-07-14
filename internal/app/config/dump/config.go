@@ -3,8 +3,11 @@ package dump
 import (
 	"flag"
 
+	"github.com/DanilNaum/SnipURL/internal/app/config/utils"
 	"github.com/caarlos0/env/v6"
 )
+
+var defaultVal = "storage.json"
 
 //go:generate moq -out logger_moq_test.go . logger
 type logger interface {
@@ -12,13 +15,13 @@ type logger interface {
 }
 
 type dumpConfig struct {
-	Path *string `env:"FILE_STORAGE_PATH"`
+	Path *string `json:"file_storage_path" env:"FILE_STORAGE_PATH"`
 }
 
 // DumpConfigFromFlags creates a dumpConfig with a default storage path from command-line flags.
 // It sets the default dump file path to "storage.json" if not specified.
 func DumpConfigFromFlags() *dumpConfig {
-	path := flag.String("f", "storage.json", "path to dump file")
+	path := flag.String("f", "", "path to dump file")
 	return &dumpConfig{
 		Path: path,
 	}
@@ -35,10 +38,22 @@ func DumpConfigFromEnv(log logger) *dumpConfig {
 	return c
 }
 
+// DumpConfigFromJsonFile loads configuration from a JSON file into a dumpConfig struct.
+// Logs a fatal error and exits if loading fails.
+func DumpConfigFromJsonFile(jsonFileName string, log logger) *dumpConfig {
+	var config dumpConfig
+	if jsonFileName != "" {
+		if err := utils.LoadConfigFromFile(jsonFileName, &config); err != nil {
+			log.Fatalf(err.Error())
+		}
+	}
+	return &config
+}
+
 // MergeDumpConfigs combines environment and flag-based configurations for dump settings.
 // It prioritizes environment configuration and uses flag configuration as a fallback.
 // Logs a fatal error if either configuration is nil.
-func MergeDumpConfigs(envConfig, flagsConfig *dumpConfig, log logger) *dumpConfig {
+func MergeDumpConfigs(envConfig, flagsConfig, fileConfig *dumpConfig, log logger) *dumpConfig {
 	if envConfig == nil {
 		log.Fatalf("error env config is nil")
 		return nil
@@ -49,11 +64,20 @@ func MergeDumpConfigs(envConfig, flagsConfig *dumpConfig, log logger) *dumpConfi
 		return nil
 	}
 
-	if envConfig.Path == nil {
-		envConfig.Path = flagsConfig.Path
+	if *flagsConfig.Path == "" {
+		flagsConfig.Path = nil
 	}
 
-	return envConfig
+	if fileConfig == nil {
+		return &dumpConfig{
+			Path: utils.Merge(envConfig.Path, flagsConfig.Path, &defaultVal),
+		}
+
+	}
+
+	return &dumpConfig{
+		Path: utils.Merge(envConfig.Path, flagsConfig.Path, fileConfig.Path, &defaultVal),
+	}
 }
 
 // GetPath returns the configured file storage path.

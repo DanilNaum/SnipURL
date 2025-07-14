@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"os"
 
 	"github.com/DanilNaum/SnipURL/internal/app/config/cookie"
 	"github.com/DanilNaum/SnipURL/internal/app/config/db"
@@ -47,6 +48,10 @@ func NewConfig(log logger) *config {
 	dumpConfigFlags := dump.DumpConfigFromFlags()
 	serverConfigFlags := server.ServerConfigFromFlags()
 
+	var configFile string
+	flag.StringVar(&configFile, "c", "", "config file name")
+	flag.StringVar(&configFile, "config", "", "config file name (long form)")
+
 	flag.Parse()
 
 	dbConfigEnv := db.DBConfigFromEnv(log)
@@ -54,9 +59,17 @@ func NewConfig(log logger) *config {
 	serverConfigEnv := server.ServerConfigFromEnv(log)
 	cookieConfigEnv := cookie.CookieConfigFromEnv(log)
 
-	serverConfig := server.MergeServerConfigs(serverConfigEnv, serverConfigFlags, log)
-	dumpConfig := dump.MergeDumpConfigs(dumpConfigEnv, dumpConfigFlags, log)
-	dbConfig := db.MergeDBConfigs(dbConfigEnv, dbConfigFlag, log)
+	if configFile == "" {
+		configFile = os.Getenv("CONFIG")
+	}
+
+	dbConfigFile := db.DBConfigFromJsonFile(configFile, log)
+	dumpConfigFile := dump.DumpConfigFromJsonFile(configFile, log)
+	serverConfigFile := server.ServerConfigFromJsonFile(configFile, log)
+
+	serverConfig := server.MergeServerConfigs(serverConfigEnv, serverConfigFlags, serverConfigFile, log)
+	dumpConfig := dump.MergeDumpConfigs(dumpConfigEnv, dumpConfigFlags, dumpConfigFile, log)
+	dbConfig := db.MergeDBConfigs(dbConfigEnv, dbConfigFlag, dbConfigFile, log)
 
 	return &config{
 		serverConfig: serverConfig,
