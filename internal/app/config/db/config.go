@@ -37,10 +37,10 @@ func DBConfigFromEnv(log logger) *dbConfig {
 	return c
 }
 
-// DBConfigFromJsonFile loads database configuration from a JSON file.
+// DBConfigFromJSONFile loads database configuration from a JSON file.
 // It takes the path to a JSON file and a logger, loads the configuration into a dbConfig struct,
 // and logs a fatal error if loading fails. Returns the loaded dbConfig.
-func DBConfigFromJsonFile(jsonFileName string, log logger) *dbConfig {
+func DBConfigFromJSONFile(jsonFileName string, log logger) *dbConfig {
 	var config dbConfig
 	if jsonFileName != "" {
 		if err := utils.LoadConfigFromFile(jsonFileName, &config); err != nil {

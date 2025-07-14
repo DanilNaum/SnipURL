@@ -57,10 +57,10 @@ func ServerConfigFromEnv(log logger) *serverConfig {
 	return c
 }
 
-// ServerConfigFromJsonFile reads a JSON configuration file and returns a pointer
+// ServerConfigFromJSONFile reads a JSON configuration file and returns a pointer
 // to a serverConfig object. It takes the name of the JSON file and a logger
 // instance as parameters.
-func ServerConfigFromJsonFile(jsonFileName string, log logger) *serverConfig {
+func ServerConfigFromJSONFile(jsonFileName string, log logger) *serverConfig {
 	var config serverConfig
 	if jsonFileName != "" {
 		if err := utils.LoadConfigFromFile(jsonFileName, &config); err != nil {
@@ -92,7 +92,7 @@ func MergeServerConfigs(envConfig, flagsConfig, fileConfig *serverConfig, log lo
 		flagsConfig.BaseURL = nil
 	}
 
-	if *flagsConfig.EnableHTTPS == false {
+	if !*flagsConfig.EnableHTTPS {
 		flagsConfig.EnableHTTPS = nil
 	}
 

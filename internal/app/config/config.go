@@ -63,9 +63,9 @@ func NewConfig(log logger) *config {
 		configFile = os.Getenv("CONFIG")
 	}
 
-	dbConfigFile := db.DBConfigFromJsonFile(configFile, log)
-	dumpConfigFile := dump.DumpConfigFromJsonFile(configFile, log)
-	serverConfigFile := server.ServerConfigFromJsonFile(configFile, log)
+	dbConfigFile := db.DBConfigFromJSONFile(configFile, log)
+	dumpConfigFile := dump.DumpConfigFromJSONFile(configFile, log)
+	serverConfigFile := server.ServerConfigFromJSONFile(configFile, log)
 
 	serverConfig := server.MergeServerConfigs(serverConfigEnv, serverConfigFlags, serverConfigFile, log)
 	dumpConfig := dump.MergeDumpConfigs(dumpConfigEnv, dumpConfigFlags, dumpConfigFile, log)

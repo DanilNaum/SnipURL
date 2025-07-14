@@ -38,9 +38,9 @@ func DumpConfigFromEnv(log logger) *dumpConfig {
 	return c
 }
 
-// DumpConfigFromJsonFile loads configuration from a JSON file into a dumpConfig struct.
+// DumpConfigFromJSONFile loads configuration from a JSON file into a dumpConfig struct.
 // Logs a fatal error and exits if loading fails.
-func DumpConfigFromJsonFile(jsonFileName string, log logger) *dumpConfig {
+func DumpConfigFromJSONFile(jsonFileName string, log logger) *dumpConfig {
 	var config dumpConfig
 	if jsonFileName != "" {
 		if err := utils.LoadConfigFromFile(jsonFileName, &config); err != nil {
