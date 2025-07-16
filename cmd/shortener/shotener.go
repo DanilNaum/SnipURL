@@ -60,7 +60,7 @@ func run(log *zap.SugaredLogger) error {
 
 	conf := config.NewConfig(log)
 
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
 	defer cancel()
 
