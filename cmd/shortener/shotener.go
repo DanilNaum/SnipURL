@@ -25,7 +25,6 @@ import (
 	urlstorage "github.com/DanilNaum/SnipURL/internal/app/repository/url"
 	deleteurl "github.com/DanilNaum/SnipURL/internal/app/service/delete"
 	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -97,8 +96,6 @@ func run(log *zap.SugaredLogger) error {
 		defer dump.Close()
 	}
 
-	services, ctx := errgroup.WithContext(ctx)
-
 	hash := hash.NewHasher(8)
 
 	deleteService := deleteurl.NewDeleteService(ctx, urlStorage)
@@ -114,26 +111,9 @@ func run(log *zap.SugaredLogger) error {
 		return err
 	}
 
-	httpServer := httpserver.NewHTTPServer(controller, httpserver.WithAddr(conf.ServerConfig().HTTPServerHost()), httpserver.WithTLS(conf.ServerConfig().GetEnableHTTPS()))
+	httpServer := httpserver.NewHTTPServer(ctx, controller, httpserver.WithAddr(conf.ServerConfig().HTTPServerHost()), httpserver.WithTLS(conf.ServerConfig().GetEnableHTTPS()))
 
-	services.Go(func() error {
-		err = <-httpServer.Notify()
-		return err
-	})
-
-	go func() {
-		<-ctx.Done()
-		err = httpServer.Shutdown()
-		if err != nil {
-			log.Errorf("shutdown error: %s", err)
-		}
-	}()
-
-	err = services.Wait()
-
-	if err == nil || errors.Is(err, context.Canceled) {
-		return nil
-	}
+	<-httpServer.IdleConnsClosed()
 
 	return err
 }
