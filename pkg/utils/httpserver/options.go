@@ -40,3 +40,13 @@ func WithAddr(addr string) Option {
 		s.server.Addr = ":" + parts[len(parts)-1]
 	}
 }
+
+// WithTLS returns an Option that enables or disables TLS for the server.
+// Parameters:
+//
+//	on - a boolean indicating whether to enable (true) or disable (false) TLS.
+func WithTLS(on bool) Option {
+	return func(s *server) {
+		s.tls = on
+	}
+}
