@@ -10,6 +10,7 @@ import (
 	"github.com/DanilNaum/SnipURL/internal/app/config"
 	"github.com/DanilNaum/SnipURL/internal/app/repository/url/memory"
 	"github.com/DanilNaum/SnipURL/internal/app/repository/url/psql"
+	"github.com/DanilNaum/SnipURL/internal/app/service/private"
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 	rest "github.com/DanilNaum/SnipURL/internal/app/transport/rest"
 	"github.com/DanilNaum/SnipURL/pkg/cookie"
@@ -100,12 +101,13 @@ func run(log *zap.SugaredLogger) error {
 
 	deleteService := deleteurl.NewDeleteService(ctx, urlStorage)
 	urlSnipperService := urlsnipper.NewURLSnipperService(urlStorage, hash, dump, deleteService, log)
+	internalService := private.NewInternalService(urlStorage)
 
 	mux := chi.NewRouter()
 
 	cookieManager := cookie.NewCookieManager([]byte(conf.CookieConfig().GetSecret()), cookie.WithName("user"))
 
-	controller, err := rest.NewController(mux, conf.ServerConfig(), urlSnipperService, urlStorage, cookieManager, log)
+	controller, err := rest.NewController(mux, conf.ServerConfig(), urlSnipperService, internalService, urlStorage, cookieManager, log)
 
 	if err != nil {
 		return err

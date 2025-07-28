@@ -9,3 +9,8 @@ type URLRecord struct {
 	UserID      string
 	Deleted     bool
 }
+
+type State struct {
+	UrlsNum  int
+	UsersNum int
+}

@@ -19,6 +19,7 @@ type serverConfig interface {
 	GetBaseURL() string
 	GetPrefix() (string, error)
 	GetEnableHTTPS() bool
+	GetTrustedSubNet() string
 }
 
 type dumpConfig interface {
