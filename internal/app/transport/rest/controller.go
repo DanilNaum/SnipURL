@@ -4,8 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/DanilNaum/SnipURL/internal/app/transport/rest/internalendpoints"
 	"github.com/DanilNaum/SnipURL/internal/app/transport/rest/pprof"
 
+	"github.com/DanilNaum/SnipURL/internal/app/service/private"
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
 	middlewares "github.com/DanilNaum/SnipURL/internal/app/transport/rest/middlewares"
 	psqlping "github.com/DanilNaum/SnipURL/internal/app/transport/rest/psqlPing"
@@ -20,6 +22,7 @@ type logger interface {
 type config interface {
 	GetPrefix() (string, error)
 	GetBaseURL() string
+	GetTrustedSubNet() string
 }
 
 type service interface {
@@ -28,6 +31,10 @@ type service interface {
 	SetURLs(ctx context.Context, urls []*urlsnipper.SetURLsInput) (map[string]*urlsnipper.SetURLsOutput, error)
 	GetURLs(ctx context.Context) ([]*urlsnipper.URL, error)
 	DeleteURLs(ctx context.Context, ids []string)
+}
+
+type internalService interface {
+	GetState(ctx context.Context) (*private.State, error)
 }
 
 type psqlStoragePinger interface {
@@ -52,11 +59,12 @@ type cookieManager interface {
 //   - logger: Logger interface for logging information
 //
 // Returns an configured HTTP handler and an error if initialization fails.
-func NewController(mux *chi.Mux, conf config, service service, psqlStoragePinger psqlStoragePinger, cookieManager cookieManager, logger logger) (http.Handler, error) {
+func NewController(mux *chi.Mux, conf config, service service, internalService internalService, psqlStoragePinger psqlStoragePinger, cookieManager cookieManager, logger logger) (http.Handler, error) {
 
-	middlewares := middlewares.NewMiddleware(logger, cookieManager)
+	middlewares := middlewares.NewMiddleware(logger, cookieManager, conf.GetTrustedSubNet())
 
 	muxWithMiddlewares := middlewares.Register(mux)
+	// muxWithInternalMiddlewares := middlewares.RegisterForInternalReq(mux)
 
 	snipEndpoint, err := snipendpoint.NewSnipEndpoint(service, conf)
 	if err != nil {
@@ -72,5 +80,12 @@ func NewController(mux *chi.Mux, conf config, service service, psqlStoragePinger
 	pprofEndpoint := pprof.NewPProfEndpoint()
 	pprofEndpoint.Register(muxWithMiddlewares)
 
-	return muxWithMiddlewares, nil
+	internalEndpoints, err := internalendpoints.NewInternalEndpoint(internalService)
+	if err != nil {
+		return nil, err
+	}
+	// mux.With(middlewares.IsTrustedSubNet).
+	internalEndpoints.Register(mux.With(middlewares.IsTrustedSubNet))
+
+	return mux, nil
 }

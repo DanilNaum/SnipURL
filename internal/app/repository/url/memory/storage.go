@@ -169,3 +169,25 @@ func (s *storage) DeleteURLs(userID string, ids []string) error {
 	}
 	return nil
 }
+
+// GetState returns statistics about the current state of the storage.
+// It counts the number of non-deleted URLs and unique users with non-empty user IDs.
+func (s *storage) GetState(ctx context.Context) (*urlstorage.State, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	urlsCount := 0
+	users := make(map[string]bool)
+
+	for _, urlRecord := range s.urls {
+		if !urlRecord.Deleted && urlRecord.UserID != "" {
+			urlsCount++
+			users[urlRecord.UserID] = true
+		}
+	}
+
+	return &urlstorage.State{
+		UrlsNum:  urlsCount,
+		UsersNum: len(users),
+	}, nil
+}
