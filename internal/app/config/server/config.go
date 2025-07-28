@@ -165,6 +165,7 @@ func (c *serverConfig) GetEnableHTTPS() bool {
 	return *c.EnableHTTPS
 }
 
+// GetTrustedSubNet returns the trusted subnet configuration value.
 func (c *serverConfig) GetTrustedSubNet() string {
 	return *c.TrustedSubNet
 }

@@ -10,6 +10,8 @@ type URLRecord struct {
 	Deleted     bool
 }
 
+// Package url provides data structures for URL shortening service.
+// It defines types for storing shortened URLs and service state information.
 type State struct {
 	UrlsNum  int
 	UsersNum int
