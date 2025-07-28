@@ -31,8 +31,8 @@ func NewInternalEndpoint(service service) (*internalEndpoints, error) {
 	}, nil
 }
 
-func (s *internalEndpoints) Register(r chi.Router) {
+func (ie *internalEndpoints) Register(r chi.Router) {
 
-	r.Get(endpointStats, s.getStats)
+	r.Get(endpointStats, ie.getStats)
 
 }
