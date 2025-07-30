@@ -1,0 +1,166 @@
+syntax = "proto3";
+
+package snipurl;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "./protobuf";
+
+service SnipURLService {
+  // Создать короткую ссылку (plain text)
+  rpc CreateShortURL(ShortURLRequest) returns (ShortURLResponse) ;
+
+  // Получить оригинальный URL по короткому ID
+  rpc GetOriginalURL(ShortURLID) returns (OriginalURLResponse) ;
+
+  // Создать короткую ссылку (JSON)
+  rpc CreateShortURLJson(JsonShortURLRequest) returns (JsonShortURLResponse);
+
+  // Создать короткие ссылки пакетно
+  rpc BatchCreateShortURLs(BatchCreateRequest) returns (BatchCreateResponse) ;
+
+  // Получить все URL пользователя
+  rpc GetUserURLs(google.protobuf.Empty) returns (UserURLsResponse) ;
+
+  // Удалить URL пользователя
+  rpc DeleteUserURLs(DeleteUserURLsRequest) returns (DeleteResponse) ;
+
+  // Проверка состояния базы данных
+  rpc Ping(google.protobuf.Empty) returns (PingResponse) ;
+
+  // Получить статистику сервиса
+  rpc GetStats(google.protobuf.Empty) returns (StatsResponse);
+}
+
+// Базовые структуры
+
+message Status {
+  int32 code = 1;    // HTTP-код статуса
+  string message = 2; // Опциональное сообщение
+}
+
+message Error {
+  Status status = 1;
+}
+
+// Сообщения для запросов и ответов
+
+message ShortURLRequest {
+  string url = 1;
+}
+
+message ShortURLResponse {
+  oneof response {
+    SuccessShortURL success = 1;
+    Error error = 2;
+  }
+}
+
+message SuccessShortURL {
+  Status status = 1;
+  string short_url = 2;
+}
+
+message ShortURLID {
+  string id = 1;
+}
+
+message OriginalURLResponse {
+  oneof response {
+    SuccessOriginalURL success = 1;
+    Error error = 2;
+  }
+}
+
+message SuccessOriginalURL {
+  Status status = 1;
+  string original_url = 2; // Для 302 редиректа
+}
+
+message JsonShortURLRequest {
+  string url = 1;
+}
+
+message JsonShortURLResponse {
+  oneof response {
+    SuccessJsonShortURL success = 1;
+    Error error = 2;
+  }
+}
+
+message SuccessJsonShortURL {
+  Status status = 1;
+  string short_url = 2;
+}
+
+message BatchURLItem {
+  string correlation_id = 1;
+  string original_url = 2;
+}
+
+message BatchCreateRequest {
+  repeated BatchURLItem items = 1;
+}
+
+message BatchCreateResponseItem {
+  string correlation_id = 1;
+  string short_url = 2;
+}
+
+message BatchCreateResponse {
+  oneof response {
+    SuccessBatchCreate success = 1;
+    Error error = 2;
+  }
+}
+
+message SuccessBatchCreate {
+  Status status = 1;
+  repeated BatchCreateResponseItem items = 2;
+}
+
+message UserURLItem {
+  string short_url = 1;
+  string original_url = 2;
+}
+
+message UserURLsResponse {
+  oneof response {
+    SuccessUserURLs success = 1;
+    Error error = 2;
+  }
+}
+
+message SuccessUserURLs {
+  Status status = 1;
+  repeated UserURLItem items = 2;
+}
+
+message DeleteUserURLsRequest {
+  repeated string url_ids = 1;
+}
+
+message DeleteResponse {
+  Status status = 1;
+}
+
+message PingResponse {
+  Status status = 1;
+}
+
+message StatsResponse {
+  oneof response {
+    SuccessStats success = 1;
+    Error error = 2;
+  }
+}
+
+message SuccessStats {
+  Status status = 1;
+  StatsData data = 2;
+}
+
+message StatsData {
+  int32 urls = 1;
+  int32 users = 2;
+}
