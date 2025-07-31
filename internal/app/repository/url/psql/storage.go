@@ -183,3 +183,24 @@ func (s *storage) DeleteURLs(userID string, ids []string) error {
 	}
 	return nil
 }
+
+// GetState retrieves the current state statistics from the database,
+// returning the count of active URLs and unique users.
+func (s *storage) GetState(ctx context.Context) (*urlstorage.State, error) {
+	query := `SELECT 
+		COUNT(DISTINCT id) as urls_count,
+		COUNT(DISTINCT user_uuid) as users_count
+	FROM url 
+	WHERE deleted = false AND user_uuid != ''`
+
+	var urlsCount, usersCount int
+	err := s.conn.QueryRow(ctx, query).Scan(&urlsCount, &usersCount)
+	if err != nil {
+		return nil, err
+	}
+
+	return &urlstorage.State{
+		UrlsNum:  urlsCount,
+		UsersNum: usersCount,
+	}, nil
+}
