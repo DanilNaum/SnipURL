@@ -12,7 +12,7 @@ func (ie *internalEndpoints) getStats(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	responder.RespondWithJson(w, &State{
+	responder.RespondWithJSON(w, &State{
 		UrlsNum:  stats.UrlsNum,
 		UsersNum: stats.UsersNum,
 	})
