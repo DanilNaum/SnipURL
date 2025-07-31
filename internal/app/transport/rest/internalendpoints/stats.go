@@ -1,8 +1,9 @@
 package internalendpoints
 
 import (
-	"encoding/json"
 	"net/http"
+
+	"github.com/DanilNaum/SnipURL/internal/app/transport/rest/utils/responder"
 )
 
 func (ie *internalEndpoints) getStats(w http.ResponseWriter, r *http.Request) {
@@ -10,13 +11,9 @@ func (ie *internalEndpoints) getStats(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-	resp, err := json.Marshal(&State{
+
+	responder.RespondWithJson(w, &State{
 		UrlsNum:  stats.UrlsNum,
 		UsersNum: stats.UsersNum,
 	})
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-	w.Write(resp)
 }

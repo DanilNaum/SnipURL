@@ -84,7 +84,7 @@ func NewController(mux *chi.Mux, conf config, service service, internalService i
 	if err != nil {
 		return nil, err
 	}
-	// mux.With(middlewares.IsTrustedSubNet).
+
 	internalEndpoints.Register(mux.With(middlewares.IsTrustedSubNet))
 
 	return mux, nil

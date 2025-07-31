@@ -3,11 +3,9 @@ package interceptors
 import (
 	"context"
 	"net"
-	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 )
@@ -72,28 +70,6 @@ func (t *TrustedSubnetInterceptor) UnaryServerInterceptor(protectedMethods map[s
 }
 
 func (t *TrustedSubnetInterceptor) getClientIP(ctx context.Context) (net.IP, error) {
-	// Сначала пытаемся получить IP из метаданных (X-Real-IP, X-Forwarded-For)
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		// Проверяем X-Real-IP
-		if realIPs := md.Get("x-real-ip"); len(realIPs) > 0 && realIPs[0] != "" {
-			ip := net.ParseIP(realIPs[0])
-			if ip != nil {
-				return ip, nil
-			}
-		}
-
-		// Проверяем X-Forwarded-For
-		if forwardedIPs := md.Get("x-forwarded-for"); len(forwardedIPs) > 0 && forwardedIPs[0] != "" {
-			// X-Forwarded-For может содержать несколько IP, разделенных запятыми
-			ips := strings.Split(forwardedIPs[0], ",")
-			if len(ips) > 0 {
-				ip := net.ParseIP(strings.TrimSpace(ips[0]))
-				if ip != nil {
-					return ip, nil
-				}
-			}
-		}
-	}
 
 	// Если не удалось получить IP из метаданных, используем peer info
 	if p, ok := peer.FromContext(ctx); ok {
