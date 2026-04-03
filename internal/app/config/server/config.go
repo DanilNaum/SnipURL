@@ -11,9 +11,10 @@ import (
 )
 
 var (
-	defaultHost        = "localhost:8080"
-	defaultBaseURL     = "http://localhost:8080"
-	defaultEnableHTTPS = false
+	defaultHost          = "localhost:8080"
+	defaultBaseURL       = "http://localhost:8080"
+	defaultEnableHTTPS   = false
+	defaultTrustedSubNet = ""
 )
 
 //go:generate moq -out logger_moq_test.go . logger
@@ -22,9 +23,10 @@ type logger interface {
 }
 
 type serverConfig struct {
-	Host        *string `json:"server_address" env:"SERVER_ADDRESS"`
-	BaseURL     *string `json:"base_url" env:"BASE_URL"`
-	EnableHTTPS *bool   `json:"enable_https" env:"ENABLE_HTTPS"`
+	Host          *string `json:"server_address" env:"SERVER_ADDRESS"`
+	BaseURL       *string `json:"base_url" env:"BASE_URL"`
+	EnableHTTPS   *bool   `json:"enable_https" env:"ENABLE_HTTPS"`
+	TrustedSubNet *string `json:"trusted_subnet" env:"TRUSTED_SUBNET"`
 }
 
 // ServerConfigFromFlags parses command-line flags to configure server settings.
@@ -37,10 +39,13 @@ func ServerConfigFromFlags() *serverConfig {
 
 	enableHTTPS := flag.Bool("s", false, "enable HTTPS")
 
+	trustedSubNet := flag.String("t", "", "trusted Sub Net")
+
 	return &serverConfig{
-		Host:        host,
-		BaseURL:     baseURL,
-		EnableHTTPS: enableHTTPS,
+		Host:          host,
+		BaseURL:       baseURL,
+		EnableHTTPS:   enableHTTPS,
+		TrustedSubNet: trustedSubNet,
 	}
 }
 
@@ -96,17 +101,23 @@ func MergeServerConfigs(envConfig, flagsConfig, fileConfig *serverConfig, log lo
 		flagsConfig.EnableHTTPS = nil
 	}
 
+	if *flagsConfig.TrustedSubNet == "" {
+		flagsConfig.TrustedSubNet = nil
+	}
+
 	if fileConfig == nil {
 		return &serverConfig{
-			Host:        utils.Merge(envConfig.Host, flagsConfig.Host, &defaultHost),
-			BaseURL:     utils.Merge(envConfig.BaseURL, flagsConfig.BaseURL, &defaultBaseURL),
-			EnableHTTPS: utils.Merge(envConfig.EnableHTTPS, flagsConfig.EnableHTTPS, &defaultEnableHTTPS),
+			Host:          utils.Merge(envConfig.Host, flagsConfig.Host, &defaultHost),
+			BaseURL:       utils.Merge(envConfig.BaseURL, flagsConfig.BaseURL, &defaultBaseURL),
+			EnableHTTPS:   utils.Merge(envConfig.EnableHTTPS, flagsConfig.EnableHTTPS, &defaultEnableHTTPS),
+			TrustedSubNet: utils.Merge(envConfig.TrustedSubNet, flagsConfig.TrustedSubNet, &defaultTrustedSubNet),
 		}
 	}
 	return &serverConfig{
-		Host:        utils.Merge(envConfig.Host, flagsConfig.Host, fileConfig.Host, &defaultHost),
-		BaseURL:     utils.Merge(envConfig.BaseURL, flagsConfig.BaseURL, fileConfig.BaseURL, &defaultBaseURL),
-		EnableHTTPS: utils.Merge(envConfig.EnableHTTPS, flagsConfig.EnableHTTPS, fileConfig.EnableHTTPS, &defaultEnableHTTPS),
+		Host:          utils.Merge(envConfig.Host, flagsConfig.Host, fileConfig.Host, &defaultHost),
+		BaseURL:       utils.Merge(envConfig.BaseURL, flagsConfig.BaseURL, fileConfig.BaseURL, &defaultBaseURL),
+		EnableHTTPS:   utils.Merge(envConfig.EnableHTTPS, flagsConfig.EnableHTTPS, fileConfig.EnableHTTPS, &defaultEnableHTTPS),
+		TrustedSubNet: utils.Merge(envConfig.TrustedSubNet, flagsConfig.TrustedSubNet, fileConfig.TrustedSubNet, &defaultTrustedSubNet),
 	}
 }
 
@@ -152,6 +163,11 @@ func (c *serverConfig) GetBaseURL() string {
 // GetEnableHTTPs returns the value of the EnableHTTPs field indicating if HTTPS is enabled.
 func (c *serverConfig) GetEnableHTTPS() bool {
 	return *c.EnableHTTPS
+}
+
+// GetTrustedSubNet returns the trusted subnet configuration value.
+func (c *serverConfig) GetTrustedSubNet() string {
+	return *c.TrustedSubNet
 }
 
 // GetPrefix extracts and returns the path prefix from the base URL.

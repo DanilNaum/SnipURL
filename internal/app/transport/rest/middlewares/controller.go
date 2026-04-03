@@ -18,13 +18,15 @@ type cookieManager interface {
 type middleware struct {
 	logger        logger
 	cookieManager cookieManager
+	trustedSubnet string
 }
 
 // NewMiddleware creates a new middleware instance with the provided logger and cookie manager.
-func NewMiddleware(logger logger, cookieManager cookieManager) *middleware {
+func NewMiddleware(logger logger, cookieManager cookieManager, trustedSubnet string) *middleware {
 	return &middleware{
 		logger:        logger,
 		cookieManager: cookieManager,
+		trustedSubnet: trustedSubnet,
 	}
 }
 
@@ -40,3 +42,9 @@ func (m *middleware) Register(mux *chi.Mux) *chi.Mux {
 
 	return mux
 }
+
+// func (m *middleware) RegisterForInternalReq(mux *chi.Mux) *chi.Mux {
+
+// 	mux.Use(m.isTrustedSubNet)
+// 	return mux
+// }

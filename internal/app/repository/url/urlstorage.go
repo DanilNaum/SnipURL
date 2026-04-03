@@ -11,4 +11,5 @@ type URLStorage interface {
 	SetURLs(ctx context.Context, urls []*URLRecord) ([]*URLRecord, error)
 	GetURLs(ctx context.Context) ([]*URLRecord, error)
 	DeleteURLs(userID string, ids []string) error
+	GetState(ctx context.Context) (*State, error)
 }
