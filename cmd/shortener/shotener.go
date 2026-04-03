@@ -12,6 +12,7 @@ import (
 	"github.com/DanilNaum/SnipURL/internal/app/repository/url/psql"
 	"github.com/DanilNaum/SnipURL/internal/app/service/private"
 	"github.com/DanilNaum/SnipURL/internal/app/service/urlsnipper"
+	"github.com/DanilNaum/SnipURL/internal/app/transport/grpc"
 	rest "github.com/DanilNaum/SnipURL/internal/app/transport/rest"
 	"github.com/DanilNaum/SnipURL/pkg/cookie"
 	"github.com/DanilNaum/SnipURL/pkg/migration"
@@ -115,7 +116,31 @@ func run(log *zap.SugaredLogger) error {
 
 	httpServer := httpserver.NewHTTPServer(ctx, controller, httpserver.WithAddr(conf.ServerConfig().HTTPServerHost()), httpserver.WithTLS(conf.ServerConfig().GetEnableHTTPS()))
 
-	<-httpServer.IdleConnsClosed()
+	grpcCookieManager := grpc.NewCookieManager()
+	grpcController, err := grpc.NewController(
+		urlSnipperService,
+		internalService,
+		urlStorage,
+		conf.ServerConfig(),
+		grpcCookieManager,
+		log,
+		conf.ServerConfig().GetTrustedSubNet(),
+	)
+	if err != nil {
+		return err
+	}
+	grpcStopChan := grpcController.ServeWithCtx(ctx, ":9090")
+
+	select {
+	case err = <-grpcStopChan:
+		cancel()
+		<-httpServer.IdleConnsClosed()
+
+	case <-httpServer.IdleConnsClosed():
+		cancel()
+		<-grpcStopChan
+
+	}
 
 	return err
 }
